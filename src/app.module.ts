@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { SuccessInterceptor } from './common/success-response.interceptor';
+import { PrismaModule } from './database/prisma/prisma.module';
 import { GlobalExceptionFilter } from './exceptions/global-exception.filter';
 import { AuthGuard } from './guard/auth.guard';
 import { UsersModule } from './users/users.module';
@@ -11,7 +13,7 @@ import { UsersService } from './users/users.service';
 import { ConfigService } from '@nestjs/config';
 
 @Module({
-  imports: [UsersModule],
+  imports: [PrismaModule, UsersModule],
   controllers: [AppController, UsersController],
   providers: [
     AppService,

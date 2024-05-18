@@ -13,8 +13,8 @@ import { UsersService } from './users/users.service';
 import { ConfigService } from '@nestjs/config';
 
 @Module({
-  imports: [PrismaModule, UsersModule],
-  controllers: [AppController, UsersController],
+  imports: [],
+  controllers: [AppController],
   providers: [
     AppService,
     UsersService,

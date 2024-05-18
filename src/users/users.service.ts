@@ -1,25 +1,38 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
-import * as dotenv from 'dotenv';
-dotenv.config();
 
 @Injectable()
 export class UsersService {
-  private readonly REST_API_KEY = process.env.REST_API_KEY;
-  private readonly REDIRECT_URI = process.env.REDIRECT_URI;
+  private readonly restApiKey: string;
+  private readonly redirectUri: string;
 
-  getKakaoCode() {
-    return `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${this.REST_API_KEY}&redirect_uri=${this.REDIRECT_URI}`;
+  constructor(private readonly configService: ConfigService) {
+    this.restApiKey = this.getConfigValue('REST_API_KEY');
+    this.redirectUri = this.getConfigValue('REDIRECT_URI');
   }
 
-  async kakaoLogIn(code: string): Promise<string> {
+  private getConfigValue(key: string): string {
+    const value = this.configService.get(key);
+
+    if (!value) throw new Error(`${key} is missing`);
+
+    return value;
+  }
+
+  getKakaoCode() {
+    return `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${this.restApiKey}&redirect_uri=${this.redirectUri}`;
+  }
+
+  async kakaoSignIn(code: string): Promise<string> {
     const url = 'https://kauth.kakao.com/oauth/token';
     const params = new URLSearchParams({
       grant_type: 'authorization_code',
-      client_id: this.REST_API_KEY,
-      redirect_uri: this.REDIRECT_URI,
+      client_id: this.restApiKey,
+      redirect_uri: this.redirectUri,
       code,
     });
+
     const header = {
       'Content-type': 'application/x-www-form-urlencoded;charset=utf-8',
     };
@@ -30,7 +43,7 @@ export class UsersService {
     return response.data.access_token;
   }
 
-  async kakaoLogout(ACCESS_TOKEN: string) {
+  async kakaoSignOut(ACCESS_TOKEN: string) {
     const url = 'https://kapi.kakao.com/v1/user/logout';
     const header = {
       'Content-Type': 'application/x-www-form-urlencoded',

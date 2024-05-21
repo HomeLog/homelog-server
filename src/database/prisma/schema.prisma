@@ -39,8 +39,9 @@ model GuestBook {
 }
 
 model UserProfile {
-  id   String @id
-  user User   @relation(fields: [id], references: [id])
+  id       String @id
+  user     User   @relation(fields: [id], references: [id])
+  nickname String
 
   profileImageUrl String?
   homeImageUrl    String?

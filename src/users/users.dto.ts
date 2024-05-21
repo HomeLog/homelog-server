@@ -18,17 +18,6 @@ export class CreateProfileDto {
 
 export class EditProfileDto {
   @IsString()
-  id: string;
-
-  @IsString()
   @IsOptional()
   nickname: string;
-
-  @IsOptional()
-  @IsString()
-  profileImageUrl: string;
-
-  @IsOptional()
-  @IsString()
-  homeImageUrl: string;
 }

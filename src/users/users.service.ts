@@ -49,18 +49,14 @@ export class UsersService {
     return response.data.access_token;
   }
 
-  async kakaoSignOut(ACCESS_TOKEN: string) {
+  async kakaoSignOut(token: string) {
     const url = 'https://kapi.kakao.com/v1/user/logout';
     const header = {
       'Content-Type': 'application/x-www-form-urlencoded',
-      Authorization: `Bearer ${ACCESS_TOKEN}`,
+      Authorization: `Bearer ${token}`,
     };
     await axios.post(url, null, { headers: header });
     return true;
-  }
-
-  async findUsers() {
-    return await this.prismaService.user.findMany({ select: { id: true } });
   }
 
   async createUser(dto: SignUpKakaoDto) {
@@ -76,19 +72,9 @@ export class UsersService {
     });
 
     const kakaoId = response.data.id.toString();
-    const user = await this.prismaService.user.findUnique({
+    return await this.prismaService.user.findUnique({
       where: { id: kakaoId },
     });
-
-    if (!user) {
-      const newUser = {
-        id: kakaoId,
-      };
-
-      return this.prismaService.user.create({ data: newUser });
-    }
-
-    return user;
   }
 
   async createProfile(
@@ -96,7 +82,7 @@ export class UsersService {
     dto: CreateProfileDto,
     profileImage?: string | null,
     homeImage?: string | null,
-  ) {
+  ): Promise<UserProfile | null> {
     const profile = await this.prismaService.userProfile.create({
       data: {
         id: userId,
@@ -118,10 +104,15 @@ export class UsersService {
     else return null;
   }
 
-  async editProfile(userId: string, dto: EditProfileDto) {
-    return await this.prismaService.userProfile.update({
+  async editProfile(
+    userId: string,
+    dto: EditProfileDto,
+    profileImage?: string | null,
+    homeImage?: string | null,
+  ) {
+    await this.prismaService.userProfile.update({
       where: { id: userId },
-      data: dto,
+      data: { ...dto, profileImageUrl: profileImage, homeImageUrl: homeImage },
     });
   }
 }

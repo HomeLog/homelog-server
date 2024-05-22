@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { UserProfile } from '@prisma/client';
 import axios from 'axios';
-import { CreateProfileDto, EditProfileDto, SignUpKakaoDto } from './users.dto';
 import { PrismaService } from 'src/database/prisma/prisma.service';
-import { User, UserProfile } from '@prisma/client';
+import { CreateProfileDto, EditProfileDto, SignUpKakaoDto } from './users.dto';
 
 @Injectable()
 export class UsersService {
@@ -60,22 +60,32 @@ export class UsersService {
   }
 
   async createUser(dto: SignUpKakaoDto) {
-    return await this.prismaService.user.create({ data: dto });
+    return await this.prismaService.user.upsert({
+      where: { id: dto.id },
+      update: dto,
+      create: dto,
+    });
   }
 
-  async validateToken(token: string): Promise<User | null> {
-    const url = 'https://kapi.kakao.com/v2/user/me';
-    const response = await axios.get(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    const kakaoId = response.data.id.toString();
+  async findUserById(id: string) {
     return await this.prismaService.user.findUnique({
-      where: { id: kakaoId },
+      where: { id },
     });
   }
+
+  // async validateToken(token: string): Promise<User | null> {
+  //   const url = 'https://kapi.kakao.com/v2/user/me';
+  //   const response = await axios.get(url, {
+  //     headers: {
+  //       Authorization: `Bearer ${token}`,
+  //     },
+  //   });
+
+  //   const kakaoId = response?.data.id.toString();
+  //   return await this.prismaService.user.findUnique({
+  //     where: { id: kakaoId },
+  //   });
+  // }
 
   async createProfile(
     userId: string,

@@ -12,18 +12,21 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { CookieOptions, Response } from 'express';
-import { UsersService } from './users.service';
-import { CreateProfileDto, EditProfileDto, SignUpKakaoDto } from './users.dto';
-import { Private } from 'src/decorator/private.decorator';
-import { DAccount } from 'src/decorator/account.decorator';
-import { User } from '@prisma/client';
 import { FilesInterceptor } from '@nestjs/platform-express';
+import { User } from '@prisma/client';
 import axios from 'axios';
+import { CookieOptions, Response } from 'express';
+import * as jwt from 'jsonwebtoken';
+import { DAccount } from 'src/decorator/account.decorator';
+import { Private } from 'src/decorator/private.decorator';
+import { CreateProfileDto, EditProfileDto, SignUpKakaoDto } from './users.dto';
+import { UsersService } from './users.service';
 
 @Controller('users')
 export class UsersController {
+  private jwtSecret: string;
   private readonly cookieOptions: CookieOptions;
+
   constructor(
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
@@ -31,9 +34,21 @@ export class UsersController {
     this.cookieOptions = {
       maxAge: 1000 * 60 * 15,
       httpOnly: true,
-      sameSite: 'none',
-      secure: this.configService.get('NODE_ENV') === 'production',
+      sameSite: 'strict',
+      secure: false,
+      ...(this.configService.get('NODE_ENV') === 'production' && {
+        sameSite: 'none',
+        secure: true,
+      }),
     };
+
+    const jwtSecret = this.configService.get('JWT_SECRET');
+
+    if (!jwtSecret) {
+      throw new Error('JWT_SECRET is missing');
+    }
+
+    this.jwtSecret = jwtSecret;
   }
 
   @Get('kakao')
@@ -45,21 +60,26 @@ export class UsersController {
 
   @Get('kakao/callback')
   async kakaoCallback(@Query('code') code: string, @Res() response: Response) {
-    const accessToken = await this.usersService.kakaoSignIn(code);
+    const kakaoAccessToken = await this.usersService.kakaoSignIn(code);
 
     const url = 'https://kapi.kakao.com/v2/user/me';
+
     const userInfo = await axios.get(url, {
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${kakaoAccessToken}`,
       },
     });
 
-    await this.usersService.createUser(
+    const user = await this.usersService.createUser(
       new SignUpKakaoDto(userInfo.data.id.toString()),
     );
 
-    response.cookie('accessToken', accessToken, this.cookieOptions);
-    return response.send({ accessToken });
+    const homeLogAccessToken = jwt.sign({}, this.jwtSecret, {
+      subject: user.id,
+    });
+
+    response.cookie('accessToken', homeLogAccessToken, this.cookieOptions);
+    return response.send({ homeLogAccessToken });
   }
 
   @Private('user')

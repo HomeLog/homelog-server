@@ -4,6 +4,9 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
+  NotFoundException,
   Patch,
   Post,
   Query,
@@ -17,19 +20,15 @@ import { User } from '@prisma/client';
 import axios from 'axios';
 import { CookieOptions, Response } from 'express';
 import * as jwt from 'jsonwebtoken';
+
+import { StorageEngine } from 'multer';
+import { getFilePath, getLocalStorage } from 'src/common/utils/file.util';
 import { DAccount } from 'src/decorator/account.decorator';
 import { Private } from 'src/decorator/private.decorator';
 import { CreateProfileDto, EditProfileDto, SignUpKakaoDto } from './users.dto';
 import { UsersService } from './users.service';
-import { diskStorage } from 'multer';
 
-const storage = diskStorage({
-  destination: './uploads',
-  filename: (req, file, callback) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    callback(null, `${file.fieldname}-${uniqueSuffix}-${file.originalname}`);
-  },
-});
+
 
 @Controller('users')
 export class UsersController {
@@ -96,85 +95,81 @@ export class UsersController {
   async getUser(userId: string) {
     const user = await this.usersService.findUserById(userId);
 
-    if (!user) throw new BadRequestException('no user');
-    else return user;
+    if (!user) throw new NotFoundException('no user');
+
+    return user;
   }
 
   @Get('find-profile')
   async getProfile(userId: string) {
     const profile = await this.usersService.getProfileById(userId);
 
-    if (!profile) throw new BadRequestException('no profile');
+    if (!profile) throw new NotFoundException('no profile');
     else return profile;
   }
 
   @Post('create-profile')
-  @UseInterceptors(
-    FileFieldsInterceptor(
-      [
-        { name: 'profileImage', maxCount: 1 },
-        { name: 'homeImage', maxCount: 1 },
-      ],
-      { storage },
-    ),
-  )
   @Private('user')
+  @HttpCode(HttpStatus.CREATED)
+  @ProfileImageUploadInterceptor({
+    storage: getLocalStorage(),
+  })
   async createProfile(
     @Body() dto: CreateProfileDto,
     @DAccount('user') user: User,
     @UploadedFiles()
     files: {
-      profileImage?: Express.Multer.File[];
-      homeImage?: Express.Multer.File[];
+      profileImage?: Express.Multer.File;
+      homeImage?: Express.Multer.File;
     },
   ) {
     const profile = await this.usersService.getProfileById(user.id);
     if (profile) throw new BadRequestException('already exist');
 
-    const profileImage = files.profileImage ? files.profileImage[0] : null;
-    const homeImage = files.homeImage ? files.homeImage[0] : null;
+    const [profileImagePath, homeImagePath] = await Promise.all([
+      getFilePath(files.profileImage),
+      getFilePath(files.homeImage),
+    ]);
 
     return await this.usersService.createProfile(
       user.id.toString(),
       dto,
-      profileImage ? profileImage.path : null,
-      homeImage ? homeImage.path : null,
+      profileImagePath,
+      homeImagePath,
     );
   }
 
   @Patch('edit-profile')
   @Private('user')
-  @UseInterceptors(
-    FileFieldsInterceptor(
-      [
-        { name: 'profileImage', maxCount: 1 },
-        { name: 'homeImage', maxCount: 1 },
-      ],
-      { storage },
-    ),
-  )
+  @ProfileImageUploadInterceptor({
+    storage: getLocalStorage(),
+  })
   async editProfile(
     @Body() dto: EditProfileDto,
     @DAccount('user') user: User,
     @UploadedFiles()
     files: {
-      profileImage?: Express.Multer.File[];
-      homeImage?: Express.Multer.File[];
+      profileImage?: Express.Multer.File;
+      homeImage?: Express.Multer.File;
     },
   ) {
     const profile = await this.usersService.getProfileById(user.id.toString());
     if (!profile) throw new BadRequestException('not existing profile');
 
-    const profileImage = files.profileImage ? files.profileImage[0] : null;
-    const homeImage = files.homeImage ? files.homeImage[0] : null;
+    const profileImagePath = files.profileImage
+      ? await getFilePath(files.profileImage[0])
+      : null;
+    const homeImagePath = files.homeImage
+      ? await getFilePath(files.homeImage[0])
+      : null;
 
-    await this.usersService.editProfile(
+    const updatedProfile = await this.usersService.editProfile(
       user.id.toString(),
       dto,
-      profileImage ? profileImage.path : null,
-      homeImage ? homeImage.path : null,
+      profileImagePath,
+      homeImagePath,
     );
 
-    return await this.usersService.getProfileById(user.id.toString());
+    return updatedProfile;
   }
 }

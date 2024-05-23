@@ -12,23 +12,19 @@ import {
   Query,
   Res,
   UploadedFiles,
-  UseInterceptors,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { User } from '@prisma/client';
 import axios from 'axios';
 import { CookieOptions, Response } from 'express';
 import * as jwt from 'jsonwebtoken';
 
-import { StorageEngine } from 'multer';
 import { getFilePath, getLocalStorage } from 'src/common/utils/file.util';
 import { DAccount } from 'src/decorator/account.decorator';
 import { Private } from 'src/decorator/private.decorator';
+import ProfileImageUploadInterceptor from 'src/interceptors/profile-image-upload.interceptor';
 import { CreateProfileDto, EditProfileDto, SignUpKakaoDto } from './users.dto';
 import { UsersService } from './users.service';
-
-
 
 @Controller('users')
 export class UsersController {

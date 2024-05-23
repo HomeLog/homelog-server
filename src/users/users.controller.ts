@@ -12,7 +12,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { FilesInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { User } from '@prisma/client';
 import axios from 'axios';
 import { CookieOptions, Response } from 'express';
@@ -21,6 +21,15 @@ import { DAccount } from 'src/decorator/account.decorator';
 import { Private } from 'src/decorator/private.decorator';
 import { CreateProfileDto, EditProfileDto, SignUpKakaoDto } from './users.dto';
 import { UsersService } from './users.service';
+import { diskStorage } from 'multer';
+
+const storage = diskStorage({
+  destination: './uploads',
+  filename: (req, file, callback) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    callback(null, `${file.fieldname}-${uniqueSuffix}-${file.originalname}`);
+  },
+});
 
 @Controller('users')
 export class UsersController {
@@ -86,29 +95,50 @@ export class UsersController {
   @Delete('sign-out')
   async signOut(@Res({ passthrough: true }) response: Response) {
     response.clearCookie('accessToken', this.cookieOptions);
-    //response.status(204).send();
+    response.status(204).send();
+  }
+
+  @Get('find-user')
+  async getUser(userId: string) {
+    const user = await this.usersService.findUserById(userId);
+
+    if (!user) throw new BadRequestException('no user');
+    else return user;
   }
 
   @Get('find-profile')
   async getProfile(userId: string) {
-    return await this.usersService.getProfileById(userId);
+    const profile = await this.usersService.getProfileById(userId);
+
+    if (!profile) throw new BadRequestException('no profile');
+    else return profile;
   }
 
   @Post('create-profile')
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'profileImage', maxCount: 1 },
+        { name: 'homeImage', maxCount: 1 },
+      ],
+      { storage },
+    ),
+  )
   @Private('user')
-  @UseInterceptors(FilesInterceptor('images'))
   async createProfile(
     @Body() dto: CreateProfileDto,
     @DAccount('user') user: User,
-    @UploadedFiles() files: Express.Multer.File[],
+    @UploadedFiles()
+    files: {
+      profileImage?: Express.Multer.File[];
+      homeImage?: Express.Multer.File[];
+    },
   ) {
     const profile = await this.usersService.getProfileById(user.id);
     if (profile) throw new BadRequestException('already exist');
 
-    const profileImage = files?.find(
-      (file) => file.fieldname === 'profileImage',
-    );
-    const homeImage = files?.find((file) => file.fieldname === 'homeImage');
+    const profileImage = files.profileImage ? files.profileImage[0] : null;
+    const homeImage = files.homeImage ? files.homeImage[0] : null;
 
     return await this.usersService.createProfile(
       user.id.toString(),
@@ -120,19 +150,29 @@ export class UsersController {
 
   @Patch('edit-profile')
   @Private('user')
-  @UseInterceptors(FilesInterceptor('images'))
+  @UseInterceptors(
+    FileFieldsInterceptor(
+      [
+        { name: 'profileImage', maxCount: 1 },
+        { name: 'homeImage', maxCount: 1 },
+      ],
+      { storage },
+    ),
+  )
   async editProfile(
     @Body() dto: EditProfileDto,
     @DAccount('user') user: User,
-    @UploadedFiles() files: Express.Multer.File[],
+    @UploadedFiles()
+    files: {
+      profileImage?: Express.Multer.File[];
+      homeImage?: Express.Multer.File[];
+    },
   ) {
     const profile = await this.usersService.getProfileById(user.id.toString());
     if (!profile) throw new BadRequestException('not existing profile');
 
-    const profileImage = files?.find(
-      (file) => file.fieldname === 'profileImage',
-    );
-    const homeImage = files?.find((file) => file.fieldname === 'homeImage');
+    const profileImage = files.profileImage ? files.profileImage[0] : null;
+    const homeImage = files.homeImage ? files.homeImage[0] : null;
 
     await this.usersService.editProfile(
       user.id.toString(),

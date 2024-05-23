@@ -86,6 +86,13 @@ export class UsersService {
   //     where: { id: kakaoId },
   //   });
   // }
+  async getProfileById(userId: string): Promise<UserProfile | null> {
+    const profile = await this.prismaService.userProfile.findUnique({
+      where: { id: userId },
+    });
+
+    return profile;
+  }
 
   async createProfile(
     userId: string,
@@ -103,15 +110,6 @@ export class UsersService {
     });
 
     return profile;
-  }
-
-  async getProfileById(userId: string): Promise<UserProfile | null> {
-    const profile = await this.prismaService.userProfile.findUnique({
-      where: { id: userId },
-    });
-
-    if (profile) return profile;
-    else return null;
   }
 
   async editProfile(

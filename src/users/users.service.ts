@@ -110,7 +110,7 @@ export class UsersService {
     profileImage?: string | null,
     homeImage?: string | null,
   ) {
-    await this.prismaService.userProfile.update({
+    return await this.prismaService.userProfile.update({
       where: { id: userId },
       data: { ...dto, profileImageUrl: profileImage, homeImageUrl: homeImage },
     });

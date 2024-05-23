@@ -14,16 +14,8 @@ export class UsersService {
     private readonly configService: ConfigService,
     private readonly prismaService: PrismaService,
   ) {
-    this.restApiKey = this.getConfigValue('REST_API_KEY');
-    this.redirectUri = this.getConfigValue('REDIRECT_URI');
-  }
-
-  private getConfigValue(key: string): string {
-    const value = this.configService.get(key);
-
-    if (!value) throw new Error(`${key} is missing`);
-
-    return value;
+    this.restApiKey = this.configService.getOrThrow('REST_API_KEY');
+    this.redirectUri = this.configService.getOrThrow('REDIRECT_URI');
   }
 
   getKakaoCode() {

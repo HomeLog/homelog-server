@@ -51,13 +51,7 @@ export class UsersController {
       }),
     };
 
-    const jwtSecret = this.configService.get('JWT_SECRET');
-
-    if (!jwtSecret) {
-      throw new Error('JWT_SECRET is missing');
-    }
-
-    this.jwtSecret = jwtSecret;
+    this.jwtSecret = this.configService.getOrThrow('JWT_SECRET');
   }
 
   @Get('kakao')

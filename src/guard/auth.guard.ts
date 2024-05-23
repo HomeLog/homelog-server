@@ -19,11 +19,7 @@ export class AuthGuard implements CanActivate {
     private readonly reflector: Reflector,
     private readonly configService: ConfigService,
   ) {
-    const jwtSecret = this.configService.get('JWT_SECRET');
-
-    if (!jwtSecret) throw new Error('JWT_SECRET is missing');
-
-    this.jwtSecret = jwtSecret;
+    this.jwtSecret = this.configService.getOrThrow('JWT_SECRET');
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

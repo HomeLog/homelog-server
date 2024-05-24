@@ -7,6 +7,7 @@ import {
   NotFoundException,
   Patch,
   Post,
+  Put,
   Query,
   Res,
   UploadedFiles,
@@ -22,9 +23,9 @@ import { uploadFileToS3 } from 'src/common/utils/file.util';
 import { DAccount } from 'src/decorator/account.decorator';
 import { Private } from 'src/decorator/private.decorator';
 import { ProfileImageUploadInterceptor } from 'src/interceptors/profile-image-upload.interceptor';
+import { S3Service } from './storage/aws.service';
 import { CreateProfileDto, EditProfileDto, SignUpKakaoDto } from './users.dto';
 import { UsersService } from './users.service';
-import { S3Service } from './storage/aws.service';
 
 @Controller('users')
 export class UsersController {
@@ -97,7 +98,7 @@ export class UsersController {
     return user;
   }
 
-  @Get('find-profile')
+  @Get('profile')
   async getProfile(userId: string) {
     const profile = await this.usersService.getProfileById(userId);
 
@@ -105,7 +106,7 @@ export class UsersController {
     else return profile;
   }
 
-  @Post('create')
+  @Post('profile')
   @Private('user')
   @UseInterceptors(ProfileImageUploadInterceptor)
   async createProfile(
@@ -132,7 +133,7 @@ export class UsersController {
     );
   }
 
-  @Patch('edit')
+  @Put('profile')
   @Private('user')
   @UseInterceptors(ProfileImageUploadInterceptor)
   async editProfile(

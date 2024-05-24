@@ -4,32 +4,29 @@ import {
   ExecutionContext,
   CallHandler,
 } from '@nestjs/common';
-import { Observable, from } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
-import { S3Service } from 'src/users/storage/aws.service';
+import { Observable } from 'rxjs';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { ConfigService } from '@nestjs/config';
+import { setupMulterS3 } from 'src/common/utils/file.util';
 
 @Injectable()
 export class ProfileImageUploadInterceptor implements NestInterceptor {
-  constructor(private s3Service: S3Service) {}
+  private readonly fileFieldsInterceptor;
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    const request = context.switchToHttp().getRequest();
-    const files = request.files;
-
-    if (!files) {
-      return next.handle();
-    }
-
-    const fileKeys = Object.keys(files);
-    const uploadPromises = fileKeys.map((key) => {
-      const file = files[key][0];
-      return this.s3Service.uploadFile(file).then((url) => {
-        request.body[`${key}Url`] = url;
-      });
-    });
-
-    return from(Promise.all(uploadPromises)).pipe(
-      switchMap(() => next.handle()),
-    );
+  constructor(private readonly configService: ConfigService) {
+    const multerOptions = setupMulterS3(this.configService);
+    this.fileFieldsInterceptor = new (FileFieldsInterceptor(
+      [
+        { name: 'profileImage', maxCount: 1 },
+        { name: 'homeImage', maxCount: 1 },
+      ],
+      multerOptions,
+    ))();
+  }
+  async intercept(
+    context: ExecutionContext,
+    next: CallHandler,
+  ): Promise<Observable<any>> {
+    return await this.fileFieldsInterceptor.intercept(context, next);
   }
 }

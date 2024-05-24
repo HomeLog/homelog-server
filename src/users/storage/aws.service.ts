@@ -10,7 +10,7 @@ export class S3Service {
 
   constructor(private readonly configService: ConfigService) {
     this.s3 = new S3Client({
-      region: 'ap-northeast-2',
+      region: this.configService.get('AWS_REGION'),
       credentials: fromIni({ profile: 'default' }),
     });
 
@@ -23,10 +23,6 @@ export class S3Service {
   }
 
   async uploadFile(file: Express.Multer.File): Promise<string> {
-    if (!file) {
-      throw new Error('No file provided');
-    }
-
     const { originalname, buffer } = file;
     const uploadCommand = new PutObjectCommand({
       Bucket: this.bucketName,

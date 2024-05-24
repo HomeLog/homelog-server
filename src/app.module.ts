@@ -11,15 +11,26 @@ import { UsersController } from './users/users.controller';
 import { UsersModule } from './users/users.module';
 import { UsersService } from './users/users.service';
 import { S3Service } from './users/storage/aws.service';
+import { NestjsFormDataModule } from 'nestjs-form-data';
+import { MulterModule } from '@nestjs/platform-express';
+import * as multer from 'multer';
 
 @Module({
-  imports: [PrismaModule, UsersModule],
+  imports: [
+    PrismaModule,
+    UsersModule,
+    NestjsFormDataModule,
+    MulterModule.register({
+      storage: multer.memoryStorage(),
+    }),
+  ],
   controllers: [AppController, UsersController],
   providers: [
     AppService,
     UsersService,
     S3Service,
     ConfigService,
+
     {
       provide: APP_INTERCEPTOR,
       useClass: SuccessInterceptor,
@@ -32,6 +43,10 @@ import { S3Service } from './users/storage/aws.service';
       provide: APP_GUARD,
       useClass: AuthGuard,
     },
+    // {
+    //   provide: APP_INTERCEPTOR,
+    //   useClass: ProfileImageUploadInterceptor,
+    // },
   ],
 })
 export class AppModule {}

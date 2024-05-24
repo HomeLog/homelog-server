@@ -1,36 +1,43 @@
-import { S3Service } from 'src/users/storage/aws.service';
+import { S3Client } from '@aws-sdk/client-s3';
+const multerS3 = require('multer-s3');
+import { ConfigService } from '@nestjs/config';
 
-// export const getLocalStorage = () =>
-//   diskStorage({
-//     destination: './uploads',
-//     filename: (req, file, callback) => {
-//       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-//       callback(null, `${file.fieldname}-${uniqueSuffix}-${file.originalname}`);
-//     },
-//   });
+export function setupMulterS3(configService: ConfigService) {
+  const region = configService.get('AWS_REGION');
+  const accessKeyId = configService.get('AWS_ACCESS_KEY_ID');
+  const secretAccessKey = configService.get('AWS_SECRET_ACCESS_KEY');
+  const bucketName = configService.get('AWS_S3_BUCKET_NAME');
 
-// export async function getFilePath(
-//   file?: Express.Multer.File,
-// ): Promise<string | undefined> {
-//   return file?.path;
-// }
+  const s3 = new S3Client({
+    region: region,
+    credentials: {
+      accessKeyId: accessKeyId,
+      secretAccessKey: secretAccessKey,
+    },
+  });
 
-// export async function getFilePaths(files: {
-//   files?: Express.Multer.File[];
-// }): Promise<{
-//   filePaths: string[];
-// }> {
-//   const filePaths = files.files?.map((file) => file.path) || [];
-//   return { filePaths };
-// }
+  const storage = multerS3({
+    s3: s3,
+    bucket: bucketName,
+    //acl: 'public-read',
+    key: function (request, file, cb) {
+      cb(null, `${Date.now()}-${file.originalname}`);
+    },
+  });
 
-export async function uploadFileToS3(
-  file: Express.Multer.File,
-  s3Service: S3Service,
-): Promise<string> {
-  if (!file) {
-    throw new Error('No file provided');
-  }
+  return {
+    storage: storage,
+    // limits: {
+    //   fileSize: 10 * 1024 * 1024,
+    //   fieldSize: 2 * 1024 * 1024,
+    //   fields: 50,
+    //   parts: 100,
+    // },
+  };
+}
 
-  return await s3Service.uploadFile(file);
+export async function getFilePath(
+  file?: Express.Multer.File,
+): Promise<string | undefined> {
+  return file?.path;
 }

@@ -10,6 +10,7 @@ import { AuthGuard } from './guard/auth.guard';
 import { UsersController } from './users/users.controller';
 import { UsersModule } from './users/users.module';
 import { UsersService } from './users/users.service';
+import { S3Service } from './users/storage/aws.service';
 
 @Module({
   imports: [PrismaModule, UsersModule],
@@ -17,6 +18,7 @@ import { UsersService } from './users/users.service';
   providers: [
     AppService,
     UsersService,
+    S3Service,
     ConfigService,
     {
       provide: APP_INTERCEPTOR,

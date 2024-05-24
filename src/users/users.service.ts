@@ -65,19 +65,6 @@ export class UsersService {
     });
   }
 
-  // async validateToken(token: string): Promise<User | null> {
-  //   const url = 'https://kapi.kakao.com/v2/user/me';
-  //   const response = await axios.get(url, {
-  //     headers: {
-  //       Authorization: `Bearer ${token}`,
-  //     },
-  //   });
-
-  //   const kakaoId = response?.data.id.toString();
-  //   return await this.prismaService.user.findUnique({
-  //     where: { id: kakaoId },
-  //   });
-  // }
   async getProfileById(userId: string): Promise<UserProfile | null> {
     const profile = await this.prismaService.userProfile.findUnique({
       where: { id: userId },

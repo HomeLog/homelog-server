@@ -4,14 +4,13 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
-  HttpStatus,
   NotFoundException,
   Patch,
   Post,
   Query,
   Res,
   UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { User } from '@prisma/client';
@@ -19,12 +18,13 @@ import axios from 'axios';
 import { CookieOptions, Response } from 'express';
 import * as jwt from 'jsonwebtoken';
 
-import { getFilePath, getLocalStorage } from 'src/common/utils/file.util';
+import { uploadFileToS3 } from 'src/common/utils/file.util';
 import { DAccount } from 'src/decorator/account.decorator';
 import { Private } from 'src/decorator/private.decorator';
-import ProfileImageUploadInterceptor from 'src/interceptors/profile-image-upload.interceptor';
+import { ProfileImageUploadInterceptor } from 'src/interceptors/profile-image-upload.interceptor';
 import { CreateProfileDto, EditProfileDto, SignUpKakaoDto } from './users.dto';
 import { UsersService } from './users.service';
+import { S3Service } from './storage/aws.service';
 
 @Controller('users')
 export class UsersController {
@@ -34,6 +34,7 @@ export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
+    private readonly s3Service: S3Service,
   ) {
     this.cookieOptions = {
       maxAge: 1000 * 60 * 15,
@@ -104,28 +105,24 @@ export class UsersController {
     else return profile;
   }
 
-  @Post('create-profile')
+  @Post('create')
   @Private('user')
-  @HttpCode(HttpStatus.CREATED)
-  @ProfileImageUploadInterceptor({
-    storage: getLocalStorage(),
-  })
+  @UseInterceptors(ProfileImageUploadInterceptor)
   async createProfile(
     @Body() dto: CreateProfileDto,
     @DAccount('user') user: User,
     @UploadedFiles()
     files: {
-      profileImage?: Express.Multer.File;
-      homeImage?: Express.Multer.File;
+      profileImage?: Express.Multer.File[];
+      homeImage?: Express.Multer.File[];
     },
   ) {
-    const profile = await this.usersService.getProfileById(user.id);
-    if (profile) throw new BadRequestException('already exist');
-
-    const [profileImagePath, homeImagePath] = await Promise.all([
-      getFilePath(files.profileImage),
-      getFilePath(files.homeImage),
-    ]);
+    const profileImagePath = files.profileImage
+      ? await uploadFileToS3(files.profileImage[0], this.s3Service)
+      : null;
+    const homeImagePath = files.homeImage
+      ? await uploadFileToS3(files.homeImage[0], this.s3Service)
+      : null;
 
     return await this.usersService.createProfile(
       user.id.toString(),
@@ -135,29 +132,29 @@ export class UsersController {
     );
   }
 
-  @Patch('edit-profile')
+  @Patch('edit')
   @Private('user')
-  @ProfileImageUploadInterceptor({
-    storage: getLocalStorage(),
-  })
+  @UseInterceptors(ProfileImageUploadInterceptor)
   async editProfile(
     @Body() dto: EditProfileDto,
     @DAccount('user') user: User,
     @UploadedFiles()
     files: {
-      profileImage?: Express.Multer.File;
-      homeImage?: Express.Multer.File;
+      profileImage?: Express.Multer.File[];
+      homeImage?: Express.Multer.File[];
     },
   ) {
     const profile = await this.usersService.getProfileById(user.id.toString());
-    if (!profile) throw new BadRequestException('not existing profile');
+    if (!profile) {
+      throw new BadRequestException('not existing profile');
+    }
 
     const profileImagePath = files.profileImage
-      ? await getFilePath(files.profileImage[0])
-      : null;
+      ? await uploadFileToS3(files.profileImage[0], this.s3Service)
+      : profile.profileImageUrl;
     const homeImagePath = files.homeImage
-      ? await getFilePath(files.homeImage[0])
-      : null;
+      ? await uploadFileToS3(files.homeImage[0], this.s3Service)
+      : profile.homeImageUrl;
 
     const updatedProfile = await this.usersService.editProfile(
       user.id.toString(),

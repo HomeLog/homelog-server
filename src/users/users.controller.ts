@@ -28,6 +28,7 @@ import { UsersService } from './users.service';
 import { FormDataRequest } from 'nestjs-form-data';
 import { S3Service } from './storage/aws.service';
 import { ProfileImageUploadInterceptor } from 'src/interceptors/profile-image-upload.interceptor';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 
 @Controller('users')
 export class UsersController {
@@ -110,9 +111,12 @@ export class UsersController {
 
   @Post('profile')
   @Private('user')
-  @HttpCode(HttpStatus.CREATED)
-  @FormDataRequest()
-  @UseInterceptors(ProfileImageUploadInterceptor)
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'profileImage', maxCount: 1 },
+      { name: 'homeImage', maxCount: 1 },
+    ]),
+  )
   async createProfile(
     @Body() dto: CreateProfileDto,
     @DAccount('user') user: User,
@@ -122,13 +126,16 @@ export class UsersController {
       homeImage?: Express.Multer.File;
     },
   ) {
+    console.log('controller');
     const profile = await this.usersService.getProfileById(user.id);
     if (profile) throw new BadRequestException('already exist');
 
-    const [profileImagePath, homeImagePath] = await Promise.all([
-      getFilePath(files.profileImage),
-      getFilePath(files.homeImage),
-    ]);
+    const profileImagePath = files.profileImage
+      ? await this.s3Service.uploadFile(files.profileImage)
+      : null;
+    const homeImagePath = files.homeImage
+      ? await this.s3Service.uploadFile(files.homeImage)
+      : null;
 
     return await this.usersService.createProfile(
       user.id.toString(),
@@ -140,8 +147,12 @@ export class UsersController {
 
   @Put('profile')
   @Private('user')
-  @FormDataRequest()
-  @UseInterceptors(ProfileImageUploadInterceptor)
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'profileImage', maxCount: 1 },
+      { name: 'homeImage', maxCount: 1 },
+    ]),
+  )
   async editProfile(
     @Body() dto: EditProfileDto,
     @DAccount('user') user: User,
@@ -151,13 +162,16 @@ export class UsersController {
       homeImage?: Express.Multer.File;
     },
   ) {
+    console.log(files);
     const profile = await this.usersService.getProfileById(user.id.toString());
     if (!profile) throw new BadRequestException('not existing profile');
 
-    const [profileImagePath, homeImagePath] = await Promise.all([
-      getFilePath(files?.profileImage),
-      getFilePath(files?.homeImage),
-    ]);
+    const profileImagePath = files.profileImage
+      ? await this.s3Service.uploadFile(files.profileImage)
+      : null;
+    const homeImagePath = files.homeImage
+      ? await this.s3Service.uploadFile(files.homeImage)
+      : null;
 
     if (files) {
       if (files.profileImage) {

@@ -3,7 +3,6 @@ const multerS3 = require('multer-s3');
 import { ConfigService } from '@nestjs/config';
 
 export function setupMulterS3(configService: ConfigService) {
-  console.log('setupMulterS3');
   const region = configService.get('AWS_REGION');
   const accessKeyId = configService.get('AWS_ACCESS_KEY_ID');
   const secretAccessKey = configService.get('AWS_SECRET_ACCESS_KEY');
@@ -40,6 +39,5 @@ export function setupMulterS3(configService: ConfigService) {
 export async function getFilePath(
   file?: Express.Multer.File,
 ): Promise<string | undefined> {
-  console.log('getFilePath');
   return file?.path;
 }

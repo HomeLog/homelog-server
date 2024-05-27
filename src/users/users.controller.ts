@@ -126,7 +126,6 @@ export class UsersController {
       homeImage?: Express.Multer.File;
     },
   ) {
-    console.log('controller');
     const profile = await this.usersService.getProfileById(user.id);
     if (profile) throw new BadRequestException('already exist');
 
@@ -162,7 +161,6 @@ export class UsersController {
       homeImage?: Express.Multer.File;
     },
   ) {
-    console.log(files);
     const profile = await this.usersService.getProfileById(user.id.toString());
     if (!profile) throw new BadRequestException('not existing profile');
 
@@ -175,7 +173,6 @@ export class UsersController {
 
     if (files) {
       if (files.profileImage) {
-        console.log(1);
         await this.s3Service.uploadFile(files.profileImage);
       }
       if (files.homeImage) {

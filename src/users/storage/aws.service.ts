@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { fromIni } from '@aws-sdk/credential-providers';
 import { ConfigService } from '@nestjs/config';
 import { setupMulterS3 } from 'src/common/utils/file.util';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
@@ -41,16 +40,15 @@ export class S3Service {
   }
 
   async uploadFile(file: Express.Multer.File): Promise<string> {
-    console.log('uploadFile');
-    const { originalname, buffer } = file;
     const uploadCommand = new PutObjectCommand({
       Bucket: this.bucketName,
-      Key: `${Date.now()}-${originalname}`,
-      Body: buffer,
+      Key: `${Date.now()}-${file.originalname}`,
+      Body: file[0].buffer,
+      ContentType: file[0].originalname.split('.').pop(),
     });
     const awsRegion = this.configService.get('AWS_REGION');
 
     await this.s3.send(uploadCommand);
-    return `https://${this.bucketName}.s3.${awsRegion}.amazonaws.com/${uploadCommand.input.Key}`;
+    return `https://${this.bucketName}.s3.${awsRegion}.amazonaws.com/${uploadCommand.input.Key}.${uploadCommand.input.ContentType}`;
   }
 }

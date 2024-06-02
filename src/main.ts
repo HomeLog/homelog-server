@@ -7,15 +7,15 @@ import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.use(cookieParser());
-  app.useGlobalInterceptors(new SuccessInterceptor());
-  app.useGlobalFilters(new GlobalExceptionFilter());
   app.enableCors({
     origin: 'http://localhost:3000',
     credentials: true,
   });
+  app.use(cookieParser());
+  app.useGlobalInterceptors(new SuccessInterceptor());
+  app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
 
-  await app.listen(3000);
+  await app.listen(3001);
 }
 bootstrap();

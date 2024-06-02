@@ -58,7 +58,7 @@ export class UsersController {
   kakaoSignIn(@Res() response: Response) {
     const url = this.usersService.getKakaoCode();
 
-    return response.redirect(url);
+    response.redirect(url);
   }
 
   @Get('kakao/callback')

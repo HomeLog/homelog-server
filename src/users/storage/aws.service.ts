@@ -1,8 +1,9 @@
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { Injectable } from '@nestjs/common';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { ConfigService } from '@nestjs/config';
-import { setupMulterS3 } from 'src/common/utils/file.util';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { nanoid } from 'nanoid';
+import { setupMulterS3 } from 'src/common/utils/file.util';
 
 @Injectable()
 export class S3Service {
@@ -39,16 +40,26 @@ export class S3Service {
     ))();
   }
 
-  async uploadFile(file: Express.Multer.File): Promise<string> {
+  async uploadFile(
+    file: Express.Multer.File | undefined,
+  ): Promise<string | undefined> {
+    if (!file) return undefined;
+
+    const body = file.buffer;
+    const contentType = file.originalname.split('.').pop()?.toLowerCase();
+    const key = `${nanoid()}.${contentType}`;
+
     const uploadCommand = new PutObjectCommand({
       Bucket: this.bucketName,
-      Key: `${Date.now()}-${file.originalname}`,
-      Body: file[0].buffer,
-      ContentType: file[0].originalname.split('.').pop(),
+      Key: key,
+      Body: body,
+      ContentType: contentType,
     });
+
     const awsRegion = this.configService.get('AWS_REGION');
 
     await this.s3.send(uploadCommand);
-    return `https://${this.bucketName}.s3.${awsRegion}.amazonaws.com/${uploadCommand.input.Key}.${uploadCommand.input.ContentType}`;
+
+    return `https://${this.bucketName}.s3.${awsRegion}.amazonaws.com/${key}`;
   }
 }

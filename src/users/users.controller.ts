@@ -4,8 +4,6 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
-  HttpStatus,
   NotFoundException,
   Post,
   Put,
@@ -20,15 +18,12 @@ import axios from 'axios';
 import { CookieOptions, Response } from 'express';
 import * as jwt from 'jsonwebtoken';
 
-import { getFilePath } from 'src/common/utils/file.util';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { DAccount } from 'src/decorator/account.decorator';
 import { Private } from 'src/decorator/private.decorator';
+import { S3Service } from './storage/aws.service';
 import { CreateProfileDto, EditProfileDto, SignUpKakaoDto } from './users.dto';
 import { UsersService } from './users.service';
-import { FormDataRequest } from 'nestjs-form-data';
-import { S3Service } from './storage/aws.service';
-import { ProfileImageUploadInterceptor } from 'src/interceptors/profile-image-upload.interceptor';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
 
 @Controller('users')
 export class UsersController {
@@ -128,6 +123,11 @@ export class UsersController {
   ) {
     const profile = await this.usersService.getProfileById(user.id);
     if (profile) throw new BadRequestException('already exist');
+
+    const [profileImagePath, homeImagePath] = await Promise.all([
+      files.profileImage ? this.s3Service.uploadFile(files.profileImage) : null,
+      files.homeImage ? this.s3Service.uploadFile(files.homeImage) : null,
+    ]);
 
     const profileImagePath = files.profileImage
       ? await this.s3Service.uploadFile(files.profileImage)

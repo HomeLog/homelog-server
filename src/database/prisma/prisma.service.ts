@@ -41,10 +41,11 @@ export class PrismaService
         params.args.where = { ...params.args.where, deleted: false };
         break;
       case 'update':
-        params.action = 'updateMany';
+        params.action = 'update';
         params.args.where.deleted = false;
         break;
       case 'updateMany':
+        params.action = 'updateMany';
         params.args.where = { ...params.args.where, deleted: false };
         break;
     }

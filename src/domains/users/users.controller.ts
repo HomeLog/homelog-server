@@ -167,6 +167,9 @@ export class UsersController {
       homeImage: files?.homeImage?.pop(),
     };
 
+    console.log(profileImage);
+    console.log(homeImage);
+
     const [profileImagePath, homeImagePath] = await Promise.all([
       this.s3Service.uploadFile(profileImage),
       this.s3Service.uploadFile(homeImage),

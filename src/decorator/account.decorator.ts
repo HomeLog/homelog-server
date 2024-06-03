@@ -1,5 +1,5 @@
 import { ExecutionContext, createParamDecorator } from '@nestjs/common';
-import { AccountType } from 'src/users/users.type';
+import { AccountType } from 'src/domains/users/users.type';
 
 export const DAccount = createParamDecorator(
   (data: AccountType, ctx: ExecutionContext) => {

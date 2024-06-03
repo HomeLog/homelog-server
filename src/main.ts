@@ -3,8 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import * as cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
-import { SuccessInterceptor } from './common/success-response.interceptor';
-import { GlobalExceptionFilter } from './exceptions/global-exception.filter';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { SuccessInterceptor } from './common/interceptors/success-response.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

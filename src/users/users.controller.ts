@@ -129,13 +129,6 @@ export class UsersController {
       files.homeImage ? this.s3Service.uploadFile(files.homeImage) : null,
     ]);
 
-    const profileImagePath = files.profileImage
-      ? await this.s3Service.uploadFile(files.profileImage)
-      : null;
-    const homeImagePath = files.homeImage
-      ? await this.s3Service.uploadFile(files.homeImage)
-      : null;
-
     return await this.usersService.createProfile(
       user.id.toString(),
       dto,

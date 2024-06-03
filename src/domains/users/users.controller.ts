@@ -4,8 +4,6 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
-  HttpStatus,
   NotFoundException,
   Post,
   Put,
@@ -20,15 +18,12 @@ import axios from 'axios';
 import { CookieOptions, Response } from 'express';
 import * as jwt from 'jsonwebtoken';
 
-import { getFilePath } from 'src/common/utils/file.util';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { DAccount } from 'src/decorator/account.decorator';
 import { Private } from 'src/decorator/private.decorator';
+import { S3Service } from './storage/aws.service';
 import { CreateProfileDto, EditProfileDto, SignUpKakaoDto } from './users.dto';
 import { UsersService } from './users.service';
-import { FormDataRequest } from 'nestjs-form-data';
-import { S3Service } from './storage/aws.service';
-import { ProfileImageUploadInterceptor } from 'src/interceptors/profile-image-upload.interceptor';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
 
 @Controller('users')
 export class UsersController {
@@ -122,19 +117,22 @@ export class UsersController {
     @DAccount('user') user: User,
     @UploadedFiles()
     files: {
-      profileImage?: Express.Multer.File;
-      homeImage?: Express.Multer.File;
+      profileImage?: Express.Multer.File[];
+      homeImage?: Express.Multer.File[];
     },
   ) {
     const profile = await this.usersService.getProfileById(user.id);
     if (profile) throw new BadRequestException('already exist');
 
-    const profileImagePath = files.profileImage
-      ? await this.s3Service.uploadFile(files.profileImage)
-      : null;
-    const homeImagePath = files.homeImage
-      ? await this.s3Service.uploadFile(files.homeImage)
-      : null;
+    const { profileImage, homeImage } = {
+      profileImage: files?.profileImage?.pop(),
+      homeImage: files?.homeImage?.pop(),
+    };
+
+    const [profileImagePath, homeImagePath] = await Promise.all([
+      this.s3Service.uploadFile(profileImage),
+      this.s3Service.uploadFile(homeImage),
+    ]);
 
     return await this.usersService.createProfile(
       user.id.toString(),
@@ -157,28 +155,22 @@ export class UsersController {
     @DAccount('user') user: User,
     @UploadedFiles()
     files: {
-      profileImage?: Express.Multer.File;
-      homeImage?: Express.Multer.File;
+      profileImage?: Express.Multer.File[];
+      homeImage?: Express.Multer.File[];
     },
   ) {
     const profile = await this.usersService.getProfileById(user.id.toString());
     if (!profile) throw new BadRequestException('not existing profile');
 
-    const profileImagePath = files.profileImage
-      ? await this.s3Service.uploadFile(files.profileImage)
-      : null;
-    const homeImagePath = files.homeImage
-      ? await this.s3Service.uploadFile(files.homeImage)
-      : null;
+    const { profileImage, homeImage } = {
+      profileImage: files?.profileImage?.pop(),
+      homeImage: files?.homeImage?.pop(),
+    };
 
-    if (files) {
-      if (files.profileImage) {
-        await this.s3Service.uploadFile(files.profileImage);
-      }
-      if (files.homeImage) {
-        await this.s3Service.uploadFile(files.homeImage);
-      }
-    }
+    const [profileImagePath, homeImagePath] = await Promise.all([
+      this.s3Service.uploadFile(profileImage),
+      this.s3Service.uploadFile(homeImage),
+    ]);
 
     return await this.usersService.editProfile(
       user.id.toString(),

@@ -1,13 +1,11 @@
 import {
+  CallHandler,
+  ExecutionContext,
   Injectable,
   NestInterceptor,
-  ExecutionContext,
-  CallHandler,
 } from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
-import { setupMulterS3 } from 'src/common/utils/file.util';
+import { Observable } from 'rxjs';
 
 @Injectable()
 export class ProfileImageUploadInterceptor implements NestInterceptor {

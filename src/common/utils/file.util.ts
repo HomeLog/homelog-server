@@ -1,6 +1,6 @@
 import { S3Client } from '@aws-sdk/client-s3';
-const multerS3 = require('multer-s3');
 import { ConfigService } from '@nestjs/config';
+import * as multerS3 from 'multer-s3';
 
 export function setupMulterS3(configService: ConfigService) {
   const region = configService.get('AWS_REGION');

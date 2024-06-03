@@ -117,16 +117,21 @@ export class UsersController {
     @DAccount('user') user: User,
     @UploadedFiles()
     files: {
-      profileImage?: Express.Multer.File;
-      homeImage?: Express.Multer.File;
+      profileImage?: Express.Multer.File[];
+      homeImage?: Express.Multer.File[];
     },
   ) {
     const profile = await this.usersService.getProfileById(user.id);
     if (profile) throw new BadRequestException('already exist');
 
+    const { profileImage, homeImage } = {
+      profileImage: files?.profileImage?.pop(),
+      homeImage: files?.homeImage?.pop(),
+    };
+
     const [profileImagePath, homeImagePath] = await Promise.all([
-      files.profileImage ? this.s3Service.uploadFile(files.profileImage) : null,
-      files.homeImage ? this.s3Service.uploadFile(files.homeImage) : null,
+      this.s3Service.uploadFile(profileImage),
+      this.s3Service.uploadFile(homeImage),
     ]);
 
     return await this.usersService.createProfile(
@@ -150,28 +155,22 @@ export class UsersController {
     @DAccount('user') user: User,
     @UploadedFiles()
     files: {
-      profileImage?: Express.Multer.File;
-      homeImage?: Express.Multer.File;
+      profileImage?: Express.Multer.File[];
+      homeImage?: Express.Multer.File[];
     },
   ) {
     const profile = await this.usersService.getProfileById(user.id.toString());
     if (!profile) throw new BadRequestException('not existing profile');
 
-    const profileImagePath = files.profileImage
-      ? await this.s3Service.uploadFile(files.profileImage)
-      : null;
-    const homeImagePath = files.homeImage
-      ? await this.s3Service.uploadFile(files.homeImage)
-      : null;
+    const { profileImage, homeImage } = {
+      profileImage: files?.profileImage?.pop(),
+      homeImage: files?.homeImage?.pop(),
+    };
 
-    if (files) {
-      if (files.profileImage) {
-        await this.s3Service.uploadFile(files.profileImage);
-      }
-      if (files.homeImage) {
-        await this.s3Service.uploadFile(files.homeImage);
-      }
-    }
+    const [profileImagePath, homeImagePath] = await Promise.all([
+      this.s3Service.uploadFile(profileImage),
+      this.s3Service.uploadFile(homeImage),
+    ]);
 
     return await this.usersService.editProfile(
       user.id.toString(),

@@ -30,8 +30,9 @@ model GuestBook {
   userId String
   user   User   @relation(fields: [userId], references: [id])
 
-  content  String
-  imageUrl String?
+  visitorName String?
+  content     String?
+  imageUrl    String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

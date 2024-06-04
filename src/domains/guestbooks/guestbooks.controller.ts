@@ -22,14 +22,19 @@ export class GuestbooksController {
 
   // @TODO: 방명록 목록 조회
   @Get()
-  findAll() {
-    return this.guestbooksService.findAll();
+  @Private('user')
+  findAll(
+    @DAccount()
+    user: User,
+  ) {
+    return this.guestbooksService.findAll(user.id);
   }
 
   // @TODO: 방명록 단건 조회
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.guestbooksService.findOne(id);
+  @Private('user')
+  findOne(@DAccount() user: User, @Param('id') id: string) {
+    return this.guestbooksService.findOne(id, user.id);
   }
 
   // @TODO: 방명록 생성

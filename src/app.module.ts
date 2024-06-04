@@ -14,9 +14,12 @@ import { UsersController } from './domains/users/users.controller';
 import { UsersModule } from './domains/users/users.module';
 import { UsersService } from './domains/users/users.service';
 import { AuthGuard } from './guard/auth.guard';
+import { S3Module } from './storage/aws.module';
+import { S3Service } from './storage/aws.service';
 
 @Module({
   imports: [
+    S3Module,
     PrismaModule,
     UsersModule,
     NestjsFormDataModule,
@@ -43,10 +46,6 @@ import { AuthGuard } from './guard/auth.guard';
       provide: APP_GUARD,
       useClass: AuthGuard,
     },
-    // {
-    //   provide: APP_INTERCEPTOR,
-    //   useClass: ProfileImageUploadInterceptor,
-    // },
   ],
 })
 export class AppModule {}

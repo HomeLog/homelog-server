@@ -9,7 +9,7 @@ import { AppService } from './app.service';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { SuccessInterceptor } from './common/interceptors/success-response.interceptor';
 import { PrismaModule } from './database/prisma/prisma.module';
-import { S3Service } from './domains/users/storage/aws.service';
+import { GuestbooksModule } from './domains/guestbooks/guestbooks.module';
 import { UsersController } from './domains/users/users.controller';
 import { UsersModule } from './domains/users/users.module';
 import { UsersService } from './domains/users/users.service';
@@ -26,6 +26,7 @@ import { S3Service } from './storage/aws.service';
     MulterModule.register({
       storage: multer.memoryStorage(),
     }),
+    GuestbooksModule,
   ],
   controllers: [AppController, UsersController],
   providers: [

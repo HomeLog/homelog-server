@@ -9,20 +9,24 @@ import { AppService } from './app.service';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { SuccessInterceptor } from './common/interceptors/success-response.interceptor';
 import { PrismaModule } from './database/prisma/prisma.module';
-import { S3Service } from './domains/users/storage/aws.service';
+import { GuestbooksModule } from './domains/guestbooks/guestbooks.module';
 import { UsersController } from './domains/users/users.controller';
 import { UsersModule } from './domains/users/users.module';
 import { UsersService } from './domains/users/users.service';
 import { AuthGuard } from './guard/auth.guard';
+import { S3Module } from './storage/aws.module';
+import { S3Service } from './storage/aws.service';
 
 @Module({
   imports: [
+    S3Module,
     PrismaModule,
     UsersModule,
     NestjsFormDataModule,
     MulterModule.register({
       storage: multer.memoryStorage(),
     }),
+    GuestbooksModule,
   ],
   controllers: [AppController, UsersController],
   providers: [
@@ -43,10 +47,6 @@ import { AuthGuard } from './guard/auth.guard';
       provide: APP_GUARD,
       useClass: AuthGuard,
     },
-    // {
-    //   provide: APP_INTERCEPTOR,
-    //   useClass: ProfileImageUploadInterceptor,
-    // },
   ],
 })
 export class AppModule {}

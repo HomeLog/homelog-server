@@ -21,7 +21,7 @@ import * as jwt from 'jsonwebtoken';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { DAccount } from 'src/decorator/account.decorator';
 import { Private } from 'src/decorator/private.decorator';
-import { S3Service } from './storage/aws.service';
+import { S3Service } from '../../storage/aws.service';
 import { CreateProfileDto, EditProfileDto, SignUpKakaoDto } from './users.dto';
 import { UsersService } from './users.service';
 

@@ -87,7 +87,7 @@ export class UsersController {
     response.status(204).send();
   }
 
-  @Get('find-user')
+  @Get('user')
   async getUser(userId: string) {
     const user = await this.usersService.findUserById(userId);
 
@@ -96,9 +96,10 @@ export class UsersController {
     return user;
   }
 
-  @Get('find-profile')
-  async getProfile(userId: string) {
-    const profile = await this.usersService.getProfileById(userId);
+  @Private('user')
+  @Get('profile')
+  async getProfile(@DAccount('user') user: User) {
+    const profile = await this.usersService.getProfileById(user.id);
 
     if (!profile) throw new NotFoundException('no profile');
     else return profile;

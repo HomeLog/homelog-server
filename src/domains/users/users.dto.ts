@@ -11,6 +11,9 @@ export class CreateProfileDto {
   @IsString()
   nickname: string;
 
+  @IsString()
+  guestBookName: string;
+
   @IsOptional()
   @IsBoolean()
   deleted: boolean;
@@ -20,4 +23,8 @@ export class EditProfileDto {
   @IsString()
   @IsOptional()
   nickname: string;
+
+  @IsString()
+  @IsOptional()
+  guestBookName: string;
 }

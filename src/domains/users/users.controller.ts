@@ -87,6 +87,12 @@ export class UsersController {
     response.status(204).send();
   }
 
+  @Private('user')
+  @Get()
+  isSignedIn() {
+    return true;
+  }
+
   @Get('user')
   async getUser(userId: string) {
     const user = await this.usersService.findUserById(userId);

@@ -88,7 +88,7 @@ export class UsersController {
   }
 
   @Private('user')
-  @Get()
+  @Get('sign-in-status')
   isSignedIn() {
     return true;
   }

@@ -1,10 +1,9 @@
-import { Response } from 'express';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UserProfile } from '@prisma/client';
 import axios from 'axios';
 import { PrismaService } from 'src/database/prisma/prisma.service';
-import { CreateProfileDto, EditProfileDto, SignUpKakaoDto } from './users.dto';
+import { EditProfileDto, SignUpKakaoDto } from './users.dto';
 
 @Injectable()
 export class UsersService {

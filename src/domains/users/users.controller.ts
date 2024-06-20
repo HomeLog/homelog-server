@@ -113,42 +113,6 @@ export class UsersController {
     else return profile;
   }
 
-  // @UseInterceptors(
-  //   FileFieldsInterceptor([
-  //     { name: 'profileImage', maxCount: 1 },
-  //     { name: 'homeImage', maxCount: 1 },
-  //   ]),
-  // )
-  // async createProfile(
-  //   @Body() dto: CreateProfileDto,
-  //   @DAccount('user') user: User,
-  //   @UploadedFiles()
-  //   files: {
-  //     profileImage?: Express.Multer.File[];
-  //     homeImage?: Express.Multer.File[];
-  //   },
-  // ) {
-  //   const profile = await this.usersService.getProfileById(user.id);
-  //   if (profile) throw new BadRequestException('already exist');
-
-  //   const { profileImage, homeImage } = {
-  //     profileImage: files?.profileImage?.pop(),
-  //     homeImage: files?.homeImage?.pop(),
-  //   };
-
-  //   const [profileImagePath, homeImagePath] = await Promise.all([
-  //     this.s3Service.uploadFile(profileImage),
-  //     this.s3Service.uploadFile(homeImage),
-  //   ]);
-
-  //   return await this.usersService.createProfile(
-  //     user.id.toString(),
-  //     dto,
-  //     profileImagePath,
-  //     homeImagePath,
-  //   );
-  // }
-
   @Put('profile')
   @Private('user')
   @UseInterceptors(

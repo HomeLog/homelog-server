@@ -120,31 +120,6 @@ export class UsersService {
     return profile;
   }
 
-  // async createProfile(userId: string, dto: CreateProfileDto) {
-  //   const profile = await this.prismaService.userProfile.create({
-  //     data: { id: userId, ...dto },
-  //   });
-
-  //   return profile;
-  // }
-  // async createProfile(
-  //   userId: string,
-  //   dto: CreateProfileDto,
-  //   profileImage?: string | null,
-  //   homeImage?: string | null,
-  // ): Promise<UserProfile | null> {
-  //   const profile = await this.prismaService.userProfile.create({
-  //     data: {
-  //       id: userId,
-  //       ...dto,
-  //       profileImageUrl: profileImage,
-  //       homeImageUrl: homeImage,
-  //     },
-  //   });
-
-  //   return profile;
-  // }
-
   async editProfile(
     userId: string,
     dto: EditProfileDto,

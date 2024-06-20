@@ -1,3 +1,4 @@
+import { Response } from 'express';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UserProfile } from '@prisma/client';
@@ -51,12 +52,60 @@ export class UsersService {
     return true;
   }
 
-  async createUser(dto: SignUpKakaoDto) {
-    return await this.prismaService.user.upsert({
-      where: { id: dto.id },
-      update: dto,
-      create: dto,
+  // async createUser(dto: SignUpKakaoDto) {
+  //   return await this.prismaService.user.upsert({
+  //     where: { id: dto.id },
+  //     update: dto,
+  //     create: dto,
+  //   });
+  // }
+  async createUser(dto: SignUpKakaoDto, accessToken: string) {
+    const kakaoId = dto.id.toString();
+    const profileDto = await this.getKakaoProfile(accessToken);
+    const nickname = profileDto.nickname;
+    const guestBookName = profileDto.guestBookName;
+
+    const user = await this.prismaService.user.upsert({
+      where: { id: kakaoId },
+      update: {},
+      create: {
+        id: kakaoId,
+        userProfile: {
+          create: {
+            nickname: nickname,
+            guestBookName: guestBookName,
+          },
+        },
+      },
+      include: {
+        userProfile: true,
+      },
     });
+
+    return user;
+  }
+
+  async getKakaoProfile(accessToken: string) {
+    const url = 'https://kapi.kakao.com/v2/user/me';
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-type': 'application/x-www-form-urlencoded;charset=utf-8',
+    };
+
+    const response = await axios.get(url, { headers });
+    console.log(response.data.properties);
+
+    const nickname = response.data.properties.nickname;
+    const guestBookName = `${nickname}님의 방명록`;
+
+    const dto = {
+      nickname: nickname,
+      guestBookName: guestBookName,
+      deleted: false,
+    };
+
+    console.log(dto);
+    return dto;
   }
 
   async findUserById(id: string) {
@@ -73,23 +122,30 @@ export class UsersService {
     return profile;
   }
 
-  async createProfile(
-    userId: string,
-    dto: CreateProfileDto,
-    profileImage?: string | null,
-    homeImage?: string | null,
-  ): Promise<UserProfile | null> {
-    const profile = await this.prismaService.userProfile.create({
-      data: {
-        id: userId,
-        ...dto,
-        profileImageUrl: profileImage,
-        homeImageUrl: homeImage,
-      },
-    });
+  // async createProfile(userId: string, dto: CreateProfileDto) {
+  //   const profile = await this.prismaService.userProfile.create({
+  //     data: { id: userId, ...dto },
+  //   });
 
-    return profile;
-  }
+  //   return profile;
+  // }
+  // async createProfile(
+  //   userId: string,
+  //   dto: CreateProfileDto,
+  //   profileImage?: string | null,
+  //   homeImage?: string | null,
+  // ): Promise<UserProfile | null> {
+  //   const profile = await this.prismaService.userProfile.create({
+  //     data: {
+  //       id: userId,
+  //       ...dto,
+  //       profileImageUrl: profileImage,
+  //       homeImageUrl: homeImage,
+  //     },
+  //   });
+
+  //   return profile;
+  // }
 
   async editProfile(
     userId: string,

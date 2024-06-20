@@ -93,7 +93,6 @@ export class UsersService {
     };
 
     const response = await axios.get(url, { headers });
-    console.log(response.data.properties);
 
     const nickname = response.data.properties.nickname;
     const guestBookName = `${nickname}님의 방명록`;
@@ -104,7 +103,6 @@ export class UsersService {
       deleted: false,
     };
 
-    console.log(dto);
     return dto;
   }
 

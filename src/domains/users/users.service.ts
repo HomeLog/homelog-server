@@ -52,13 +52,6 @@ export class UsersService {
     return true;
   }
 
-  // async createUser(dto: SignUpKakaoDto) {
-  //   return await this.prismaService.user.upsert({
-  //     where: { id: dto.id },
-  //     update: dto,
-  //     create: dto,
-  //   });
-  // }
   async createUser(dto: SignUpKakaoDto, accessToken: string) {
     const kakaoId = dto.id.toString();
     const profileDto = await this.getKakaoProfile(accessToken);

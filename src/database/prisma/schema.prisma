@@ -45,7 +45,7 @@ model UserProfile {
   nickname String
   guestBookName String
 
-  profileImageUrl String?
+  avatarImageUrl String?
   homeImageUrl    String?
 
   createdAt DateTime @default(now())

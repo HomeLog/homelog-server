@@ -33,7 +33,7 @@ export class S3Service {
     const multerOptions = setupMulterS3(this.configService);
     this.fileFieldsInterceptor = new (FileFieldsInterceptor(
       [
-        { name: 'profileImage', maxCount: 1 },
+        { name: 'avatarImage', maxCount: 1 },
         { name: 'homeImage', maxCount: 1 },
       ],
       multerOptions,

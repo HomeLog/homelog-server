@@ -115,17 +115,17 @@ export class UsersService {
   async editProfile(
     userId: string,
     dto: EditProfileDto,
-    profileImage?: string | null,
+    avatarImage?: string | null,
     homeImage?: string | null,
   ) {
     return await this.prismaService.userProfile.update({
       where: { id: userId },
-      data: { ...dto, profileImageUrl: profileImage, homeImageUrl: homeImage },
+      data: { ...dto, avatarImageUrl: avatarImage, homeImageUrl: homeImage },
     });
   }
 
-  async deleteImage(userId: string, isProfileImage: boolean) {
-    const fieldToUpdate = isProfileImage ? 'profileImageUrl' : 'homeImageUrl';
+  async deleteImage(userId: string, isAvatarImage: boolean) {
+    const fieldToUpdate = isAvatarImage ? 'avatarImageUrl' : 'homeImageUrl';
     await this.prismaService.userProfile.update({
       where: { id: userId },
       data: {

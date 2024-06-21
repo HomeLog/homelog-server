@@ -117,7 +117,7 @@ export class UsersController {
   @Private('user')
   @UseInterceptors(
     FileFieldsInterceptor([
-      { name: 'profileImage', maxCount: 1 },
+      { name: 'avatarImage', maxCount: 1 },
       { name: 'homeImage', maxCount: 1 },
     ]),
   )
@@ -126,27 +126,27 @@ export class UsersController {
     @DAccount('user') user: User,
     @UploadedFiles()
     files: {
-      profileImage?: Express.Multer.File[];
+      avatarImage?: Express.Multer.File[];
       homeImage?: Express.Multer.File[];
     },
   ) {
     const profile = await this.usersService.getProfileById(user.id.toString());
     if (!profile) throw new BadRequestException('not existing profile');
 
-    const { profileImage, homeImage } = {
-      profileImage: files?.profileImage?.pop(),
+    const { avatarImage, homeImage } = {
+      avatarImage: files?.avatarImage?.pop(),
       homeImage: files?.homeImage?.pop(),
     };
 
-    const [profileImagePath, homeImagePath] = await Promise.all([
-      this.s3Service.uploadFile(profileImage),
+    const [avatarImagePath, homeImagePath] = await Promise.all([
+      this.s3Service.uploadFile(avatarImage),
       this.s3Service.uploadFile(homeImage),
     ]);
 
     return await this.usersService.editProfile(
       user.id.toString(),
       dto,
-      profileImagePath,
+      avatarImagePath,
       homeImagePath,
     );
   }
@@ -157,6 +157,6 @@ export class UsersController {
     @DAccount('user') user: User,
     @Param('imageType') imageType: string,
   ) {
-    await this.usersService.deleteImage(user.id, imageType === 'profile');
+    await this.usersService.deleteImage(user.id, imageType === 'avatar');
   }
 }

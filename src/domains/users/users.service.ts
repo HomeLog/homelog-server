@@ -123,4 +123,14 @@ export class UsersService {
       data: { ...dto, profileImageUrl: profileImage, homeImageUrl: homeImage },
     });
   }
+
+  async deleteImage(userId: string, isProfileImage: boolean) {
+    const fieldToUpdate = isProfileImage ? 'profileImageUrl' : 'homeImageUrl';
+    await this.prismaService.userProfile.update({
+      where: { id: userId },
+      data: {
+        [fieldToUpdate]: null,
+      },
+    });
+  }
 }

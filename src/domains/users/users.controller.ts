@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   NotFoundException,
+  Param,
   Put,
   Query,
   Res,
@@ -148,5 +149,14 @@ export class UsersController {
       profileImagePath,
       homeImagePath,
     );
+  }
+
+  @Private('user')
+  @Delete('profile/:imageType')
+  async deleteImage(
+    @DAccount('user') user: User,
+    @Param('imageType') imageType: string,
+  ) {
+    await this.usersService.deleteImage(user.id, imageType === 'profile');
   }
 }

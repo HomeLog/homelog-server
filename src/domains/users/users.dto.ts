@@ -7,18 +7,6 @@ export class SignUpKakaoDto {
   id: string;
 }
 
-export class CreateProfileDto {
-  @IsString()
-  nickname: string;
-
-  @IsString()
-  guestBookName: string;
-
-  @IsOptional()
-  @IsBoolean()
-  deleted: boolean;
-}
-
 export class EditProfileDto {
   @IsString()
   @IsOptional()

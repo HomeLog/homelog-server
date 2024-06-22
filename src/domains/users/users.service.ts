@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { UserProfile } from '@prisma/client';
 import axios from 'axios';
 import { PrismaService } from 'src/database/prisma/prisma.service';
-import { CreateProfileDto, EditProfileDto, SignUpKakaoDto } from './users.dto';
+import { EditProfileDto, SignUpKakaoDto } from './users.dto';
 
 @Injectable()
 export class UsersService {
@@ -51,12 +51,51 @@ export class UsersService {
     return true;
   }
 
-  async createUser(dto: SignUpKakaoDto) {
-    return await this.prismaService.user.upsert({
-      where: { id: dto.id },
-      update: dto,
-      create: dto,
+  async createUser(dto: SignUpKakaoDto, accessToken: string) {
+    const kakaoId = dto.id.toString();
+    const profileDto = await this.getKakaoProfile(accessToken);
+    const nickname = profileDto.nickname;
+    const guestBookName = profileDto.guestBookName;
+
+    const user = await this.prismaService.user.upsert({
+      where: { id: kakaoId },
+      update: {},
+      create: {
+        id: kakaoId,
+        userProfile: {
+          create: {
+            nickname: nickname,
+            guestBookName: guestBookName,
+          },
+        },
+      },
+      include: {
+        userProfile: true,
+      },
     });
+
+    return user;
+  }
+
+  async getKakaoProfile(accessToken: string) {
+    const url = 'https://kapi.kakao.com/v2/user/me';
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-type': 'application/x-www-form-urlencoded;charset=utf-8',
+    };
+
+    const response = await axios.get(url, { headers });
+
+    const nickname = response.data.properties.nickname;
+    const guestBookName = `${nickname}님의 방명록`;
+
+    const dto = {
+      nickname: nickname,
+      guestBookName: guestBookName,
+      deleted: false,
+    };
+
+    return dto;
   }
 
   async findUserById(id: string) {
@@ -73,33 +112,25 @@ export class UsersService {
     return profile;
   }
 
-  async createProfile(
-    userId: string,
-    dto: CreateProfileDto,
-    profileImage?: string | null,
-    homeImage?: string | null,
-  ): Promise<UserProfile | null> {
-    const profile = await this.prismaService.userProfile.create({
-      data: {
-        id: userId,
-        ...dto,
-        profileImageUrl: profileImage,
-        homeImageUrl: homeImage,
-      },
-    });
-
-    return profile;
-  }
-
   async editProfile(
     userId: string,
     dto: EditProfileDto,
-    profileImage?: string | null,
+    avatarImage?: string | null,
     homeImage?: string | null,
   ) {
     return await this.prismaService.userProfile.update({
       where: { id: userId },
-      data: { ...dto, profileImageUrl: profileImage, homeImageUrl: homeImage },
+      data: { ...dto, avatarImageUrl: avatarImage, homeImageUrl: homeImage },
+    });
+  }
+
+  async deleteImage(userId: string, isAvatarImage: boolean) {
+    const fieldToUpdate = isAvatarImage ? 'avatarImageUrl' : 'homeImageUrl';
+    await this.prismaService.userProfile.update({
+      where: { id: userId },
+      data: {
+        [fieldToUpdate]: null,
+      },
     });
   }
 }

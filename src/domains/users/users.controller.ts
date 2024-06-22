@@ -5,7 +5,7 @@ import {
   Delete,
   Get,
   NotFoundException,
-  Post,
+  Param,
   Put,
   Query,
   Res,
@@ -22,7 +22,7 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { DAccount } from 'src/decorator/account.decorator';
 import { Private } from 'src/decorator/private.decorator';
 import { S3Service } from '../../storage/aws.service';
-import { CreateProfileDto, EditProfileDto, SignUpKakaoDto } from './users.dto';
+import { EditProfileDto, SignUpKakaoDto } from './users.dto';
 import { UsersService } from './users.service';
 
 @Controller('users')
@@ -70,6 +70,7 @@ export class UsersController {
 
     const user = await this.usersService.createUser(
       new SignUpKakaoDto(userInfo.data.id.toString()),
+      kakaoAccessToken,
     );
 
     const homeLogAccessToken = jwt.sign({}, this.jwtSecret, {
@@ -77,6 +78,7 @@ export class UsersController {
     });
 
     response.cookie('accessToken', homeLogAccessToken, this.cookieOptions);
+
     return response.send({ homeLogAccessToken });
   }
 
@@ -88,7 +90,7 @@ export class UsersController {
   }
 
   @Private('user')
-  @Get()
+  @Get('sign-in-status')
   isSignedIn() {
     return true;
   }
@@ -111,49 +113,11 @@ export class UsersController {
     else return profile;
   }
 
-  @Post('profile')
-  @Private('user')
-  @UseInterceptors(
-    FileFieldsInterceptor([
-      { name: 'profileImage', maxCount: 1 },
-      { name: 'homeImage', maxCount: 1 },
-    ]),
-  )
-  async createProfile(
-    @Body() dto: CreateProfileDto,
-    @DAccount('user') user: User,
-    @UploadedFiles()
-    files: {
-      profileImage?: Express.Multer.File[];
-      homeImage?: Express.Multer.File[];
-    },
-  ) {
-    const profile = await this.usersService.getProfileById(user.id);
-    if (profile) throw new BadRequestException('already exist');
-
-    const { profileImage, homeImage } = {
-      profileImage: files?.profileImage?.pop(),
-      homeImage: files?.homeImage?.pop(),
-    };
-
-    const [profileImagePath, homeImagePath] = await Promise.all([
-      this.s3Service.uploadFile(profileImage),
-      this.s3Service.uploadFile(homeImage),
-    ]);
-
-    return await this.usersService.createProfile(
-      user.id.toString(),
-      dto,
-      profileImagePath,
-      homeImagePath,
-    );
-  }
-
   @Put('profile')
   @Private('user')
   @UseInterceptors(
     FileFieldsInterceptor([
-      { name: 'profileImage', maxCount: 1 },
+      { name: 'avatarImage', maxCount: 1 },
       { name: 'homeImage', maxCount: 1 },
     ]),
   )
@@ -162,28 +126,37 @@ export class UsersController {
     @DAccount('user') user: User,
     @UploadedFiles()
     files: {
-      profileImage?: Express.Multer.File[];
+      avatarImage?: Express.Multer.File[];
       homeImage?: Express.Multer.File[];
     },
   ) {
     const profile = await this.usersService.getProfileById(user.id.toString());
     if (!profile) throw new BadRequestException('not existing profile');
 
-    const { profileImage, homeImage } = {
-      profileImage: files?.profileImage?.pop(),
+    const { avatarImage, homeImage } = {
+      avatarImage: files?.avatarImage?.pop(),
       homeImage: files?.homeImage?.pop(),
     };
 
-    const [profileImagePath, homeImagePath] = await Promise.all([
-      this.s3Service.uploadFile(profileImage),
+    const [avatarImagePath, homeImagePath] = await Promise.all([
+      this.s3Service.uploadFile(avatarImage),
       this.s3Service.uploadFile(homeImage),
     ]);
 
     return await this.usersService.editProfile(
       user.id.toString(),
       dto,
-      profileImagePath,
+      avatarImagePath,
       homeImagePath,
     );
+  }
+
+  @Private('user')
+  @Delete('profile/:imageType')
+  async deleteImage(
+    @DAccount('user') user: User,
+    @Param('imageType') imageType: string,
+  ) {
+    await this.usersService.deleteImage(user.id, imageType === 'avatar');
   }
 }

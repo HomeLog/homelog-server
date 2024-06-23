@@ -1,36 +1,50 @@
 import {
-  ExceptionFilter,
-  Catch,
   ArgumentsHost,
+  Catch,
+  ExceptionFilter,
   HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { Response } from 'express';
-import { TExceptionResponse, TResponse } from 'src/types/response.type';
+import { TExceptionResponse, TResponse } from 'src/common/types/response.type';
+import { ServiceException } from '../errors/service.exception';
 
-@Catch(HttpException)
+type ErrorWithStatus = Error & { getStatus?: () => number };
+
+@Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
-  catch(exception: HttpException, host: ArgumentsHost) {
-    const ErrorResponse: TResponse<null> = {
-      success: false,
-      result: null,
-      message: this.getMessage(exception),
-    };
-
+  catch(exception: ErrorWithStatus, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    const statusCode = exception.getStatus();
+    const message = this.getMessage(exception);
+    const statusCode = this.getStatusCode(exception);
 
-    response.status(statusCode).json(ErrorResponse);
+    const errorResponse: TResponse<null> = {
+      success: false,
+      result: null,
+      message,
+    };
+
+    return response.status(statusCode).json(errorResponse);
   }
 
-  private getMessage(exception: HttpException) {
-    const exceptionResponse = exception.getResponse() as TExceptionResponse;
+  private getStatusCode(exception: ErrorWithStatus): number {
+    if (
+      exception instanceof HttpException ||
+      exception instanceof ServiceException
+    ) {
+      return exception.getStatus();
+    }
+    return HttpStatus.BAD_REQUEST;
+  }
 
-    const message =
-      typeof exceptionResponse === 'string'
+  private getMessage(exception: ErrorWithStatus): string {
+    if (exception instanceof HttpException) {
+      const exceptionResponse = exception.getResponse() as TExceptionResponse;
+      return typeof exceptionResponse === 'string'
         ? exceptionResponse
         : exceptionResponse.message;
-
-    return message;
+    }
+    return exception.message;
   }
 }

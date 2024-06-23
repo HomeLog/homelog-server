@@ -51,7 +51,7 @@ export class UsersService {
     return true;
   }
 
-  async createUser(dto: SignUpKakaoDto, accessToken: string, userInfo) {
+  async createUser(dto: SignUpKakaoDto, userInfo) {
     const kakaoId = dto.id.toString();
     const nickname = userInfo.data.properties.nickname;
     const guestBookName = `${nickname}님의 방명록`;

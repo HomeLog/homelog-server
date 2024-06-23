@@ -91,13 +91,13 @@ export class GuestbooksService {
     return this.extractGuestBookData(result);
   }
 
-  async findOne(id: string, userId: string) {
+  async findOne(id: string) {
     const result = await this.prismaService.guestBook.findUnique({
       where: { id },
       select: this.GUESTBOOK_SELECT_FIELDS,
     });
 
-    this.validateGuestbook(result, userId);
+    if (!result) throw new GuestBookNotFoundException();
 
     return this.extractGuestBookData(result as TGuestbookData);
   }

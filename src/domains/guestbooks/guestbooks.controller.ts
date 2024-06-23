@@ -36,8 +36,8 @@ export class GuestbooksController {
    * @description: 방명록 단건 조회
    */
   @Get(':id')
-  findOne(@DAccount('user') user: User, @Param('id') id: string) {
-    return this.guestbooksService.findOne(id, user.id);
+  findOne(@Param('id') id: string) {
+    return this.guestbooksService.findOne(id);
   }
 
   /**

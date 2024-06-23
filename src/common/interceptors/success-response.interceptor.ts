@@ -1,12 +1,12 @@
 import {
+  CallHandler,
+  ExecutionContext,
   Injectable,
   NestInterceptor,
-  ExecutionContext,
-  CallHandler,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { TResponse } from 'src/types/response.type';
+import { TResponse } from 'src/common/types/response.type';
 
 @Injectable()
 export class SuccessInterceptor<T> implements NestInterceptor<T, TResponse<T>> {

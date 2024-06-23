@@ -70,7 +70,7 @@ export class UsersController {
 
     const user = await this.usersService.createUser(
       new SignUpKakaoDto(userInfo.data.id.toString()),
-      kakaoAccessToken,
+      userInfo,
     );
 
     const homeLogAccessToken = jwt.sign({}, this.jwtSecret, {

@@ -51,11 +51,10 @@ export class UsersService {
     return true;
   }
 
-  async createUser(dto: SignUpKakaoDto, accessToken: string) {
+  async createUser(dto: SignUpKakaoDto, userInfo) {
     const kakaoId = dto.id.toString();
-    const profileDto = await this.getKakaoProfile(accessToken);
-    const nickname = profileDto.nickname;
-    const guestBookName = profileDto.guestBookName;
+    const nickname = userInfo.data.properties.nickname;
+    const guestBookName = `${nickname}님의 방명록`;
 
     const user = await this.prismaService.user.upsert({
       where: { id: kakaoId },
@@ -77,26 +76,26 @@ export class UsersService {
     return user;
   }
 
-  async getKakaoProfile(accessToken: string) {
-    const url = 'https://kapi.kakao.com/v2/user/me';
-    const headers = {
-      Authorization: `Bearer ${accessToken}`,
-      'Content-type': 'application/x-www-form-urlencoded;charset=utf-8',
-    };
+  // async getKakaoProfile(accessToken: string) {
+  //   const url = 'https://kapi.kakao.com/v2/user/me';
+  //   const headers = {
+  //     Authorization: `Bearer ${accessToken}`,
+  //     'Content-type': 'application/x-www-form-urlencoded;charset=utf-8',
+  //   };
 
-    const response = await axios.get(url, { headers });
+  //   const response = await axios.get(url, { headers });
 
-    const nickname = response.data.properties.nickname;
-    const guestBookName = `${nickname}님의 방명록`;
+  //   const nickname = response.data.properties.nickname;
+  //   const guestBookName = `${nickname}님의 방명록`;
 
-    const dto = {
-      nickname: nickname,
-      guestBookName: guestBookName,
-      deleted: false,
-    };
+  //   const dto = {
+  //     nickname: nickname,
+  //     guestBookName: guestBookName,
+  //     deleted: false,
+  //   };
 
-    return dto;
-  }
+  //   return dto;
+  // }
 
   async findUserById(id: string) {
     return await this.prismaService.user.findUnique({

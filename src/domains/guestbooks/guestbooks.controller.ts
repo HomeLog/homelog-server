@@ -20,7 +20,9 @@ import { GuestbooksService } from './guestbooks.service';
 export class GuestbooksController {
   constructor(private readonly guestbooksService: GuestbooksService) {}
 
-  // @TODO: 방명록 목록 조회
+  /**
+   * @description: 방명록 목록 조회
+   */
   @Get()
   @Private('user')
   findAll(
@@ -30,14 +32,17 @@ export class GuestbooksController {
     return this.guestbooksService.findAll(user.id);
   }
 
-  // @TODO: 방명록 단건 조회
+  /**
+   * @description: 방명록 단건 조회
+   */
   @Get(':id')
-  @Private('user')
-  findOne(@DAccount() user: User, @Param('id') id: string) {
-    return this.guestbooksService.findOne(id, user.id);
+  findOne(@Param('id') id: string) {
+    return this.guestbooksService.findOne(id);
   }
 
-  // @TODO: 방명록 생성
+  /**
+   * @description: 방명록 생성
+   */
   @Post()
   @UseInterceptors(FileInterceptor('imageFile'))
   @Private('user')
@@ -51,7 +56,9 @@ export class GuestbooksController {
     return this.guestbooksService.create(userId, imageFile, createGuestbookDto);
   }
 
-  // @TODO: 방명록 작성
+  /**
+   * @description: 방명록 작성
+   */
   @Put(':id')
   update(
     @Param('id') id: string,
@@ -60,9 +67,12 @@ export class GuestbooksController {
     return this.guestbooksService.update(id, updateGuestbookDto);
   }
 
-  // @TODO: 방명록 삭제
+  /**
+   * @description: 방명록 삭제
+   */
   @Delete(':id')
-  delete(@Param('id') id: string) {
-    return this.guestbooksService.delete(id);
+  @Private('user')
+  delete(@Param('id') id: string, @DAccount('user') user: User) {
+    return this.guestbooksService.delete(id, user.id);
   }
 }

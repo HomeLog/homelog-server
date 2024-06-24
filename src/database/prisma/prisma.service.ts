@@ -1,5 +1,9 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { Prisma, PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import {
+  TPrismaAction,
+  TPrismaMiddlewareParams,
+} from 'src/common/types/prisma.type';
 
 @Injectable()
 export class PrismaService
@@ -8,7 +12,7 @@ export class PrismaService
 {
   constructor() {
     super();
-    this.configSoftDeleteMiddleware();
+    this.useSoftDeleteMiddleware();
   }
 
   async onModuleInit() {
@@ -16,55 +20,42 @@ export class PrismaService
   }
 
   async onModuleDestroy() {
-    try {
-      await this.$disconnect();
-    } catch (error) {
-      throw new Error('Method not implemented.');
-    }
+    await this.$disconnect();
   }
 
-  private configSoftDeleteMiddleware() {
-    this.$use(this.excludeDeletedMiddleware);
-    this.$use(this.softDeleteMiddleware);
+  private useSoftDeleteMiddleware() {
+    this.$use(this.softDeleteMiddleware.bind(this));
   }
 
-  async excludeDeletedMiddleware(params, next): Promise<Prisma.Middleware> {
-    if (!params.model) return next(params);
+  private async softDeleteMiddleware(
+    params: TPrismaMiddlewareParams,
+    next: (params: TPrismaMiddlewareParams) => Promise<any>,
+  ): Promise<any> {
+    const targetActions: TPrismaAction[] = [
+      'findUnique',
+      'findUniqueOrThrow',
+      'findMany',
+      'findFirst',
+      'findFirstOrThrow',
+      'update',
+      'updateMany',
+      'delete',
+      'deleteMany',
+      'aggregate',
+      'count',
+      'groupBy',
+    ];
 
-    switch (params.action) {
-      case 'findUnique':
-      case 'findFirst':
-        params.action = 'findFirst';
-        params.args.where.deleted = false;
-        break;
-      case 'findMany':
-        params.args.where = { ...params.args.where, deleted: false };
-        break;
-      case 'update':
-        params.action = 'update';
-        params.args.where.deleted = false;
-        break;
-      case 'updateMany':
-        params.action = 'updateMany';
-        params.args.where = { ...params.args.where, deleted: false };
-        break;
-    }
+    if (!params.model || !targetActions.includes(params.action))
+      return next(params);
 
-    return next(params);
-  }
+    const isSoftDeleteAction = ['delete', 'deleteMany'].includes(params.action);
 
-  async softDeleteMiddleware(params, next): Promise<Prisma.Middleware> {
-    if (!params.model) return next(params);
+    params.args.where = { ...params.args.where, deleted: false };
 
-    switch (params.action) {
-      case 'delete':
-        params.action = 'update';
-        params.args.data = { deleted: true };
-        break;
-      case 'deleteMany':
-        params.action = 'updateMany';
-        params.args.data = { ...params.args.data, deleted: true };
-        break;
+    if (isSoftDeleteAction) {
+      params.action = params.action === 'delete' ? 'update' : 'updateMany';
+      params.args.data = { deleted: true };
     }
 
     return next(params);

@@ -1,10 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { nanoid } from 'nanoid';
-import utils from 'src/common/utils';
+import {
+  TGuestbookData,
+  TGuestbookSelect,
+} from 'src/common/types/guestbooks.type';
 import { PrismaService } from 'src/database/prisma/prisma.service';
-import { TGuestbookSelect } from 'src/types/guestbooks.type';
 import { S3Service } from '../../storage/aws.service';
 import { CreateGuestbookDto, UpdateGuestbookDto } from './guestbooks.dto';
+import {
+  GuestBookAccessDeniedException,
+  GuestBookNotFoundException,
+} from './guestbooks.exception';
 
 @Injectable()
 export class GuestbooksService {
@@ -16,8 +22,11 @@ export class GuestbooksService {
   ) {
     this.GUESTBOOK_SELECT_FIELDS = {
       id: true,
+      userId: true,
       visitorName: true,
       content: true,
+      imageUrl: true,
+      createdAt: true,
       user: {
         select: {
           userProfile: {
@@ -38,18 +47,7 @@ export class GuestbooksService {
       },
     });
 
-    return utils.guestbook.extractGuestBooksData(result);
-  }
-
-  async findOne(id: string, userId: string) {
-    const result = await this.prismaService.guestBook.findUnique({
-      select: this.GUESTBOOK_SELECT_FIELDS,
-      where: { id, userId },
-    });
-
-    if (!result) throw new NotFoundException('Guestbook not found');
-
-    return utils.guestbook.extractGuestBookData(result);
+    return this.extractGuestBooksData(result);
   }
 
   async create(
@@ -71,26 +69,76 @@ export class GuestbooksService {
 
     const result = await this.prismaService.guestBook.create(createData);
 
-    return utils.guestbook.extractGuestBookData(result);
+    return this.extractGuestBookData(result);
   }
 
-  async update(id: string, dto: UpdateGuestbookDto) {
+  async update(id: string, dto: UpdateGuestbookDto, userId?: string) {
+    const foundGuestbook = await this.prismaService.guestBook.findUnique({
+      where: { id },
+      select: this.GUESTBOOK_SELECT_FIELDS,
+    });
+
+    if (!foundGuestbook) throw new GuestBookNotFoundException();
+    else if (foundGuestbook.content && foundGuestbook.userId !== userId)
+      throw new GuestBookAccessDeniedException();
+
     const result = await this.prismaService.guestBook.update({
       select: this.GUESTBOOK_SELECT_FIELDS,
       where: { id },
       data: dto,
     });
 
-    return utils.guestbook.extractGuestBookData(result);
+    return this.extractGuestBookData(result);
   }
 
-  async delete(id: string) {
-    return this.prismaService.guestBook.delete({ where: { id } });
+  async findOne(id: string) {
+    const result = await this.prismaService.guestBook.findUnique({
+      where: { id },
+      select: this.GUESTBOOK_SELECT_FIELDS,
+    });
+
+    if (!result) throw new GuestBookNotFoundException();
+
+    return this.extractGuestBookData(result as TGuestbookData);
   }
 
-  private async uploadImage(
-    imageFile: Express.Multer.File,
-  ): Promise<string | undefined> {
+  async delete(id: string, userId: string) {
+    const guestbook = await this.prismaService.guestBook.findUnique({
+      where: { id },
+      select: this.GUESTBOOK_SELECT_FIELDS,
+    });
+
+    this.validateGuestbook(guestbook, userId);
+
+    const result = await this.prismaService.guestBook.delete({
+      where: { id },
+      select: this.GUESTBOOK_SELECT_FIELDS,
+    });
+
+    return this.extractGuestBookData(result);
+  }
+
+  private validateGuestbook(guestbook: TGuestbookData | null, userId: string) {
+    if (!guestbook) {
+      throw new GuestBookNotFoundException();
+    } else if (guestbook.userId !== userId)
+      throw new GuestBookAccessDeniedException();
+  }
+
+  private async uploadImage(imageFile: Express.Multer.File) {
     return this.s3Service.uploadFile(imageFile);
+  }
+
+  private extractGuestBookData(guestBook: TGuestbookData) {
+    const { user, ...foundGuestbook } = guestBook;
+
+    return {
+      ...foundGuestbook,
+      hostNickname: user.userProfile?.nickname,
+    };
+  }
+
+  private extractGuestBooksData(guestBooks: TGuestbookData[]) {
+    return guestBooks.map((guestBook) => this.extractGuestBookData(guestBook));
   }
 }

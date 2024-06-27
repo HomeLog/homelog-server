@@ -6,17 +6,30 @@ import {
   Param,
   Post,
   Put,
+  Query,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import {
+  ApiCookieAuth,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { User } from '@prisma/client';
+import { TGuestbookResponse } from 'src/common/types/guestbooks.type';
 import { DAccount } from 'src/decorator/account.decorator';
 import { Private } from 'src/decorator/private.decorator';
-import { CreateGuestbookDto, UpdateGuestbookDto } from './guestbooks.dto';
+import {
+  CreateGuestbookDto,
+  PaginationQueryDto,
+  UpdateGuestbookDto,
+} from './guestbooks.dto';
 import { GuestbooksService } from './guestbooks.service';
 
 @Controller('guestbooks')
+@ApiTags('방명록 API')
 export class GuestbooksController {
   constructor(private readonly guestbooksService: GuestbooksService) {}
 
@@ -25,11 +38,35 @@ export class GuestbooksController {
    */
   @Get()
   @Private('user')
-  findAll(
-    @DAccount()
+  @ApiOperation({
+    summary: '방명록 목록 조회',
+    description: '방명록 목록을 조회합니다.',
+  })
+  @ApiCookieAuth()
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+  })
+  @ApiQuery({
+    name: 'size',
+    required: false,
+    type: Number,
+  })
+  async findAll(
+    @Query()
+    paginationQuery: PaginationQueryDto,
+    @DAccount('user')
     user: User,
   ) {
-    return this.guestbooksService.findAll(user.id);
+    const guestbooks: TGuestbookResponse[] =
+      await this.guestbooksService.findAll(
+        user.id,
+        paginationQuery.page,
+        paginationQuery.limit,
+      );
+
+    return guestbooks;
   }
 
   /**

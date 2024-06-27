@@ -30,3 +30,7 @@ export type TGuestbookData = Prisma.GuestBookGetPayload<{
     };
   };
 }>;
+
+export type TGuestbookResponse = Omit<TGuestbookData, 'user'> & {
+  hostNickname?: string;
+};

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { nanoid } from 'nanoid';
 import {
   TGuestbookData,
+  TGuestbookResponse,
   TGuestbookSelect,
 } from 'src/common/types/guestbooks.type';
 import { PrismaService } from 'src/database/prisma/prisma.service';
@@ -39,12 +40,20 @@ export class GuestbooksService {
     };
   }
 
-  async findAll(userId: string) {
+  async findAll(userId: string, page?: number, limit?: number) {
+    const take: number = !limit || limit < 0 ? 10 : limit;
+    const skip: number = !page || page <= 0 ? 0 : (page - 1) * take;
+
     const result = await this.prismaService.guestBook.findMany({
       select: this.GUESTBOOK_SELECT_FIELDS,
       where: {
         userId,
       },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      skip,
+      take,
     });
 
     return this.extractGuestBooksData(result);
@@ -129,7 +138,7 @@ export class GuestbooksService {
     return this.s3Service.uploadFile(imageFile);
   }
 
-  private extractGuestBookData(guestBook: TGuestbookData) {
+  private extractGuestBookData(guestBook: TGuestbookData): TGuestbookResponse {
     const { user, ...foundGuestbook } = guestBook;
 
     return {
@@ -138,7 +147,9 @@ export class GuestbooksService {
     };
   }
 
-  private extractGuestBooksData(guestBooks: TGuestbookData[]) {
+  private extractGuestBooksData(
+    guestBooks: TGuestbookData[],
+  ): TGuestbookResponse[] {
     return guestBooks.map((guestBook) => this.extractGuestBookData(guestBook));
   }
 }

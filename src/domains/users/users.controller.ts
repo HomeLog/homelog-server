@@ -24,12 +24,7 @@ import { Private } from 'src/decorator/private.decorator';
 import { S3Service } from '../../storage/aws.service';
 import { EditProfileDto, SignUpKakaoDto } from './users.dto';
 import { UsersService } from './users.service';
-import {
-  ApiCreatedResponse,
-  ApiOperation,
-  ApiQuery,
-  ApiResponse,
-} from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
 
 @Controller('users')
 export class UsersController {

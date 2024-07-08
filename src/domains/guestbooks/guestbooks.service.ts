@@ -59,6 +59,12 @@ export class GuestbooksService {
     return this.extractGuestBooksData(result);
   }
 
+  async getCount(userId: string) {
+    return await this.prismaService.guestBook.count({
+      where: { userId: userId },
+    });
+  }
+
   async create(
     userId: string,
     imageFile: Express.Multer.File,

@@ -70,6 +70,15 @@ export class GuestbooksController {
   }
 
   /**
+   * @description: 방명록 개수 조회
+   */
+  @Get('count')
+  @Private('user')
+  async getTotalGuestbooks(@DAccount('user') user: User) {
+    return this.guestbooksService.getCount(user.id);
+  }
+
+  /**
    * @description: 방명록 단건 조회
    */
   @Get(':id')

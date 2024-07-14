@@ -3,66 +3,34 @@ import { nanoid } from 'nanoid';
 import {
   TGuestbookData,
   TGuestbookResponse,
-  TGuestbookSelect,
 } from 'src/common/types/guestbooks.type';
-import { PrismaService } from 'src/database/prisma/prisma.service';
 import { S3Service } from '../../storage/aws.service';
 import { CreateGuestbookDto, UpdateGuestbookDto } from './guestbooks.dto';
 import {
   GuestBookAccessDeniedException,
+  GuestBookNoImageException,
   GuestBookNotFoundException,
 } from './guestbooks.exception';
+import { GuestbooksRepository } from './guestbooks.repository';
 
 @Injectable()
 export class GuestbooksService {
-  GUESTBOOK_SELECT_FIELDS: TGuestbookSelect;
-
   constructor(
-    private readonly prismaService: PrismaService,
     private readonly s3Service: S3Service,
-  ) {
-    this.GUESTBOOK_SELECT_FIELDS = {
-      id: true,
-      userId: true,
-      visitorName: true,
-      content: true,
-      imageUrl: true,
-      createdAt: true,
-      user: {
-        select: {
-          userProfile: {
-            select: {
-              nickname: true,
-            },
-          },
-        },
-      },
-    };
-  }
+    private readonly guestbooksRepository: GuestbooksRepository,
+  ) {}
 
-  async findAll(userId: string, page?: number, limit?: number) {
+  async findGuestbooks(userId: string, page?: number, limit?: number) {
     const take: number = !limit || limit < 0 ? 10 : limit;
     const skip: number = !page || page <= 0 ? 0 : (page - 1) * take;
 
-    const result = await this.prismaService.guestBook.findMany({
-      select: this.GUESTBOOK_SELECT_FIELDS,
-      where: {
-        userId,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      skip,
-      take,
-    });
+    const result = await this.guestbooksRepository.findMany(userId, skip, take);
 
     return this.extractGuestBooksData(result);
   }
 
   async getCount(userId: string) {
-    return await this.prismaService.guestBook.count({
-      where: { userId: userId },
-    });
+    return await this.guestbooksRepository.count(userId);
   }
 
   async create(
@@ -70,28 +38,20 @@ export class GuestbooksService {
     imageFile: Express.Multer.File,
     dto: CreateGuestbookDto,
   ) {
-    const imageUrl = await this.uploadImage(imageFile);
+    const imageKey = await this.s3Service.uploadFile(imageFile);
 
-    const createData = {
-      data: {
-        id: nanoid(),
-        userId,
-        imageUrl,
-        ...dto,
-      },
-      select: this.GUESTBOOK_SELECT_FIELDS,
-    };
-
-    const result = await this.prismaService.guestBook.create(createData);
+    const result = await this.guestbooksRepository.create({
+      id: nanoid(),
+      userId,
+      imageKey,
+      ...dto,
+    });
 
     return this.extractGuestBookData(result);
   }
 
-  async update(id: string, dto: UpdateGuestbookDto, userId?: string) {
-    const foundGuestbook = await this.prismaService.guestBook.findUnique({
-      where: { id },
-      select: this.GUESTBOOK_SELECT_FIELDS,
-    });
+  async updateMessage(id: string, dto: UpdateGuestbookDto, userId?: string) {
+    const foundGuestbook = await this.guestbooksRepository.findUniqueBy({ id });
 
     if (!foundGuestbook) throw new GuestBookNotFoundException();
     else if (foundGuestbook.content && foundGuestbook.userId !== userId)
@@ -107,10 +67,7 @@ export class GuestbooksService {
   }
 
   async findOne(id: string) {
-    const result = await this.prismaService.guestBook.findUnique({
-      where: { id },
-      select: this.GUESTBOOK_SELECT_FIELDS,
-    });
+    const result = await this.guestbooksRepository.findUniqueBy({ id });
 
     if (!result) throw new GuestBookNotFoundException();
 
@@ -118,17 +75,11 @@ export class GuestbooksService {
   }
 
   async delete(id: string, userId: string) {
-    const guestbook = await this.prismaService.guestBook.findUnique({
-      where: { id },
-      select: this.GUESTBOOK_SELECT_FIELDS,
-    });
+    const guestbook = await this.guestbooksRepository.findUniqueBy({ id });
 
     this.validateGuestbook(guestbook, userId);
 
-    const result = await this.prismaService.guestBook.delete({
-      where: { id },
-      select: this.GUESTBOOK_SELECT_FIELDS,
-    });
+    const result = await this.guestbooksRepository.deleteOneBy({ id });
 
     return this.extractGuestBookData(result);
   }
@@ -138,10 +89,6 @@ export class GuestbooksService {
       throw new GuestBookNotFoundException();
     } else if (guestbook.userId !== userId)
       throw new GuestBookAccessDeniedException();
-  }
-
-  private async uploadImage(imageFile: Express.Multer.File) {
-    return this.s3Service.uploadFile(imageFile);
   }
 
   private extractGuestBookData(guestBook: TGuestbookData): TGuestbookResponse {

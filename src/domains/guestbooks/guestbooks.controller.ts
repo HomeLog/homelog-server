@@ -60,7 +60,7 @@ export class GuestbooksController {
     user: User,
   ) {
     const guestbooks: TGuestbookResponse[] =
-      await this.guestbooksService.findAll(
+      await this.guestbooksService.findGuestbooks(
         user.id,
         paginationQuery.page,
         paginationQuery.limit,
@@ -106,11 +106,11 @@ export class GuestbooksController {
    * @description: 방명록 작성
    */
   @Put(':id')
-  update(
+  updateMessage(
     @Param('id') id: string,
     @Body() updateGuestbookDto: UpdateGuestbookDto,
   ) {
-    return this.guestbooksService.update(id, updateGuestbookDto);
+    return this.guestbooksService.updateMessage(id, updateGuestbookDto);
   }
 
   /**

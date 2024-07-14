@@ -1,4 +1,8 @@
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  DeleteObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
@@ -56,10 +60,24 @@ export class S3Service {
       ContentType: contentType,
     });
 
-    const awsRegion = this.configService.get('AWS_REGION');
-
     await this.s3.send(uploadCommand);
 
-    return `https://${this.bucketName}.s3.${awsRegion}.amazonaws.com/${key}`;
+    return key;
+  }
+
+  async deleteFile(key?: string) {
+    if (!key) return false;
+
+    const deleteCommand = new DeleteObjectCommand({
+      Bucket: this.bucketName,
+      Key: key,
+    });
+
+    try {
+      await this.s3.send(deleteCommand);
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 }

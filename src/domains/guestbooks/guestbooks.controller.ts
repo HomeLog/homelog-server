@@ -60,7 +60,7 @@ export class GuestbooksController {
     user: User,
   ) {
     const guestbooks: TGuestbookResponse[] =
-      await this.guestbooksService.findAll(
+      await this.guestbooksService.findGuestbooks(
         user.id,
         paginationQuery.page,
         paginationQuery.limit,
@@ -102,15 +102,26 @@ export class GuestbooksController {
     return this.guestbooksService.create(userId, imageFile, createGuestbookDto);
   }
 
+  @Put(':id/photo')
+  @UseInterceptors(FileInterceptor('imageFile'))
+  @Private('user')
+  updatePhoto(
+    @DAccount('user') user: User,
+    @Param('id') id: string,
+    @UploadedFile() imageFile: Express.Multer.File,
+  ) {
+    return this.guestbooksService.updatePhoto(id, user.id, imageFile);
+  }
+
   /**
    * @description: 방명록 작성
    */
   @Put(':id')
-  update(
+  updateMessage(
     @Param('id') id: string,
     @Body() updateGuestbookDto: UpdateGuestbookDto,
   ) {
-    return this.guestbooksService.update(id, updateGuestbookDto);
+    return this.guestbooksService.updateMessage(id, updateGuestbookDto);
   }
 
   /**

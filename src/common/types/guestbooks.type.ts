@@ -2,7 +2,7 @@ import { Prisma } from '@prisma/client';
 
 export interface TGuestbookSelect extends Prisma.GuestBookSelectScalar {
   createdAt: true;
-  imageUrl: true;
+  imageKey: true;
   userId: boolean;
   user: {
     select: {
@@ -17,7 +17,7 @@ export interface TGuestbookSelect extends Prisma.GuestBookSelectScalar {
 
 export type TGuestbookData = Prisma.GuestBookGetPayload<{
   include: {
-    imageUrl: true;
+    imageKey: true;
     createdAt: true;
     user: {
       select: {

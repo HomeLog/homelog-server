@@ -19,12 +19,12 @@ import { CookieOptions, Response } from 'express';
 import * as jwt from 'jsonwebtoken';
 
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { ApiCreatedResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { DAccount } from 'src/decorator/account.decorator';
 import { Private } from 'src/decorator/private.decorator';
 import { S3Service } from '../../storage/aws.service';
 import { EditProfileDto, SignUpKakaoDto } from './users.dto';
 import { UsersService } from './users.service';
-import { ApiCreatedResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
 
 @Controller('users')
 export class UsersController {
@@ -179,7 +179,7 @@ export class UsersController {
       homeImage: files?.homeImage?.pop(),
     };
 
-    const [avatarImagePath, homeImagePath] = await Promise.all([
+    const [avatarImageKey, homeImageKey] = await Promise.all([
       this.s3Service.uploadFile(avatarImage),
       this.s3Service.uploadFile(homeImage),
     ]);
@@ -187,8 +187,8 @@ export class UsersController {
     return await this.usersService.editProfile(
       user.id.toString(),
       dto,
-      avatarImagePath,
-      homeImagePath,
+      avatarImageKey,
+      homeImageKey,
     );
   }
 

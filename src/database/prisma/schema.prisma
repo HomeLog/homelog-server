@@ -32,7 +32,7 @@ model GuestBook {
 
   visitorName String?
   content     String?
-  imageUrl    String?
+  imageKey    String? @unique
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -40,13 +40,13 @@ model GuestBook {
 }
 
 model UserProfile {
-  id       String @id
-  user     User   @relation(fields: [id], references: [id])
-  nickname String
+  id            String @id
+  user          User   @relation(fields: [id], references: [id])
+  nickname      String
   guestBookName String
 
-  avatarImageUrl String?
-  homeImageUrl    String?
+  avatarImageKey String? @unique
+  homeImageKey   String? @unique
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

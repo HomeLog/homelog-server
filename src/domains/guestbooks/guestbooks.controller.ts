@@ -102,6 +102,17 @@ export class GuestbooksController {
     return this.guestbooksService.create(userId, imageFile, createGuestbookDto);
   }
 
+  @Put(':id/photo')
+  @UseInterceptors(FileInterceptor('imageFile'))
+  @Private('user')
+  updatePhoto(
+    @DAccount('user') user: User,
+    @Param('id') id: string,
+    @UploadedFile() imageFile: Express.Multer.File,
+  ) {
+    return this.guestbooksService.updatePhoto(id, user.id, imageFile);
+  }
+
   /**
    * @description: 방명록 작성
    */

@@ -57,11 +57,41 @@ export class GuestbooksService {
     else if (foundGuestbook.content && foundGuestbook.userId !== userId)
       throw new GuestBookAccessDeniedException();
 
-    const result = await this.prismaService.guestBook.update({
-      select: this.GUESTBOOK_SELECT_FIELDS,
-      where: { id },
-      data: dto,
-    });
+    const result = await this.guestbooksRepository.updateOneBy(
+      { id },
+      {
+        content: dto.content,
+      },
+    );
+
+    return this.extractGuestBookData(result);
+  }
+
+  async updatePhoto(
+    id: string,
+    userId: string,
+    imageFile: Express.Multer.File,
+  ) {
+    const foundGuestbook = await this.guestbooksRepository.findUniqueBy({ id });
+
+    if (!foundGuestbook) throw new GuestBookNotFoundException();
+    else if (foundGuestbook.userId !== userId)
+      throw new GuestBookAccessDeniedException();
+    else if (!foundGuestbook.imageKey) {
+      throw new GuestBookNoImageException();
+    }
+
+    const [newImageKey] = await Promise.all([
+      this.s3Service.uploadFile(imageFile),
+      this.s3Service.deleteFile(foundGuestbook.imageKey),
+    ]);
+
+    const result = await this.guestbooksRepository.updateOneBy(
+      { id },
+      {
+        imageKey: newImageKey,
+      },
+    );
 
     return this.extractGuestBookData(result);
   }

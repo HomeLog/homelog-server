@@ -38,4 +38,9 @@ export class ErrorCodes {
     '방명록 소유자만 접근할 수 있습니다.',
     403,
   );
+
+  static readonly GUESTBOOK_NO_IMAGE = new ErrorCodes(
+    '방명록에 이미지가 없습니다.',
+    400,
+  );
 }

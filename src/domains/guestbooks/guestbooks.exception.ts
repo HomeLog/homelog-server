@@ -12,3 +12,9 @@ export class GuestBookAccessDeniedException extends ServiceException {
     super(ErrorCodes.GUESTBOOK_ACCESS_DENIED);
   }
 }
+
+export class GuestBookNoImageException extends ServiceException {
+  constructor() {
+    super(ErrorCodes.GUESTBOOK_NO_IMAGE);
+  }
+}

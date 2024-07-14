@@ -56,10 +56,8 @@ export class S3Service {
       ContentType: contentType,
     });
 
-    const awsRegion = this.configService.get('AWS_REGION');
-
     await this.s3.send(uploadCommand);
 
-    return `https://${this.bucketName}.s3.${awsRegion}.amazonaws.com/${key}`;
+    return key;
   }
 }

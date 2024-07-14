@@ -119,16 +119,16 @@ export class UsersService {
   ) {
     return await this.prismaService.userProfile.update({
       where: { id: userId },
-      data: { ...dto, avatarImageUrl: avatarImage, homeImageUrl: homeImage },
+      data: { ...dto, avatarImageKey: avatarImage, homeImageKey: homeImage },
     });
   }
 
   async deleteImage(userId: string, isAvatarImage: boolean) {
-    const fieldToUpdate = isAvatarImage ? 'avatarImageUrl' : 'homeImageUrl';
+    const imageKeyToUpdate = isAvatarImage ? 'avatarImageKey' : 'homeImageKey';
     await this.prismaService.userProfile.update({
       where: { id: userId },
       data: {
-        [fieldToUpdate]: null,
+        [imageKeyToUpdate]: null,
       },
     });
   }

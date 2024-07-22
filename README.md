@@ -8,7 +8,7 @@
 | 프로필 | 깃허브 | 역할 |
 | --- | --- | --- |
 | 고지명 | [jimyungkoh](https://github.com/jimyungkoh) | 역할1 |
-| 박상희 | [Sangddong](https://github.com/Sangddong) | 역할1 |
+| 박상희 | [Sangddong](https://github.com/Sangddong) | 카카오 소셜로그인 구현, 프로필 관련 로직 구현, swagger api 작성 |
 
 ## 3. 브랜치 전략
 ### 브랜치 관리

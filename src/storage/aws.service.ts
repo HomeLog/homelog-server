@@ -50,14 +50,13 @@ export class S3Service {
     if (!file) return undefined;
 
     const body = file.buffer;
-    const contentType = file.originalname.split('.').pop()?.toLowerCase();
-    const key = `${nanoid()}.${contentType}`;
+    const key = nanoid();
 
     const uploadCommand = new PutObjectCommand({
       Bucket: this.bucketName,
-      Key: key,
+      Key: `raw/${key}`,
       Body: body,
-      ContentType: contentType,
+      ContentType: file.mimetype,
     });
 
     await this.s3.send(uploadCommand);

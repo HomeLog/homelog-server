@@ -8,18 +8,20 @@ import { ConfigService } from '@nestjs/config';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { nanoid } from 'nanoid';
 import { setupMulterS3 } from 'src/common/utils/file.util';
+import { StorageService } from './storage.service';
 
 @Injectable()
-export class S3Service {
-  private s3: S3Client;
+export class S3Service implements StorageService {
   private bucketName: string;
+  private client: S3Client;
   private readonly fileFieldsInterceptor;
 
   constructor(private readonly configService: ConfigService) {
     const region = this.configService.get('AWS_REGION');
     const accessKeyId = this.configService.get('AWS_ACCESS_KEY_ID');
     const secretAccessKey = this.configService.get('AWS_SECRET_ACCESS_KEY');
-    this.s3 = new S3Client({
+
+    this.client = new S3Client({
       region: region,
       credentials: {
         accessKeyId: accessKeyId,
@@ -59,7 +61,7 @@ export class S3Service {
       ContentType: file.mimetype,
     });
 
-    await this.s3.send(uploadCommand);
+    await this.client.send(uploadCommand);
 
     return key;
   }
@@ -73,7 +75,7 @@ export class S3Service {
     });
 
     try {
-      await this.s3.send(deleteCommand);
+      await this.client.send(deleteCommand);
       return true;
     } catch (error) {
       return false;

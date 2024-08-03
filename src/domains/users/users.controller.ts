@@ -4,6 +4,7 @@ import {
   Controller,
   Delete,
   Get,
+  Inject,
   NotFoundException,
   Param,
   Put,
@@ -22,7 +23,7 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ApiCreatedResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { DAccount } from 'src/decorator/account.decorator';
 import { Private } from 'src/decorator/private.decorator';
-import { S3Service } from '../../storage/aws.service';
+import { StorageService } from 'src/storage/storage.service';
 import { EditProfileDto, SignUpKakaoDto } from './users.dto';
 import { UsersService } from './users.service';
 
@@ -34,7 +35,8 @@ export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private configService: ConfigService,
-    private readonly s3Service: S3Service,
+    @Inject('StorageService')
+    private readonly storageService: StorageService,
   ) {
     this.cookieOptions = {
       maxAge: 1000 * 60 * 15,
@@ -180,8 +182,8 @@ export class UsersController {
     };
 
     const [avatarImageKey, homeImageKey] = await Promise.all([
-      this.s3Service.uploadFile(avatarImage),
-      this.s3Service.uploadFile(homeImage),
+      this.storageService.uploadFile(avatarImage),
+      this.storageService.uploadFile(homeImage),
     ]);
 
     return await this.usersService.editProfile(

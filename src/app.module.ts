@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { MulterModule } from '@nestjs/platform-express';
 import * as multer from 'multer';
@@ -14,12 +14,14 @@ import { UsersController } from './domains/users/users.controller';
 import { UsersModule } from './domains/users/users.module';
 import { UsersService } from './domains/users/users.service';
 import { AuthGuard } from './guard/auth.guard';
-import { S3Module } from './storage/aws.module';
-import { S3Service } from './storage/aws.service';
+import { StorageModule } from './storage/storage.module';
 
 @Module({
   imports: [
-    S3Module,
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    StorageModule,
     PrismaModule,
     UsersModule,
     NestjsFormDataModule,
@@ -32,9 +34,7 @@ import { S3Service } from './storage/aws.service';
   providers: [
     AppService,
     UsersService,
-    S3Service,
     ConfigService,
-
     {
       provide: APP_INTERCEPTOR,
       useClass: SuccessInterceptor,

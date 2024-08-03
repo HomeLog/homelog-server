@@ -1,10 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { nanoid } from 'nanoid';
 import {
   TGuestbookData,
   TGuestbookResponse,
 } from 'src/common/types/guestbooks.type';
-import { S3Service } from '../../storage/aws.service';
+import { StorageService } from 'src/storage/storage.service';
 import { CreateGuestbookDto, UpdateGuestbookDto } from './guestbooks.dto';
 import {
   GuestBookAccessDeniedException,
@@ -16,7 +16,9 @@ import { GuestbooksRepository } from './guestbooks.repository';
 @Injectable()
 export class GuestbooksService {
   constructor(
-    private readonly s3Service: S3Service,
+    @Inject('StorageService')
+    private readonly storageService: StorageService,
+
     private readonly guestbooksRepository: GuestbooksRepository,
   ) {}
 
@@ -38,7 +40,7 @@ export class GuestbooksService {
     imageFile: Express.Multer.File,
     dto: CreateGuestbookDto,
   ) {
-    const imageKey = await this.s3Service.uploadFile(imageFile);
+    const imageKey = await this.storageService.uploadFile(imageFile);
 
     const result = await this.guestbooksRepository.create({
       id: nanoid(),
@@ -82,8 +84,8 @@ export class GuestbooksService {
     }
 
     const [newImageKey] = await Promise.all([
-      this.s3Service.uploadFile(imageFile),
-      this.s3Service.deleteFile(foundGuestbook.imageKey),
+      this.storageService.uploadFile(imageFile),
+      this.storageService.deleteFile(foundGuestbook.imageKey),
     ]);
 
     const result = await this.guestbooksRepository.updateOneBy(

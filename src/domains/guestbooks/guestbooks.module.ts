@@ -1,14 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { S3Module } from 'src/storage/aws.module';
-import { S3Service } from 'src/storage/aws.service';
+import { StorageModule } from 'src/storage/storage.module';
 import { GuestbooksController } from './guestbooks.controller';
 import { GuestbooksRepository } from './guestbooks.repository';
 import { GuestbooksService } from './guestbooks.service';
 
 @Module({
-  imports: [S3Module, ConfigModule],
+  imports: [StorageModule, ConfigModule],
   controllers: [GuestbooksController],
-  providers: [GuestbooksService, S3Service, GuestbooksRepository],
+  providers: [GuestbooksService, GuestbooksRepository],
 })
 export class GuestbooksModule {}

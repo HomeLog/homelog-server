@@ -3,6 +3,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
@@ -37,6 +38,7 @@ export class S3Service implements StorageService {
     }
 
     const multerOptions = setupMulterS3(this.configService);
+
     this.fileFieldsInterceptor = new (FileFieldsInterceptor(
       [
         { name: 'avatarImage', maxCount: 1 },
@@ -64,6 +66,25 @@ export class S3Service implements StorageService {
     await this.client.send(uploadCommand);
 
     return key;
+  }
+
+  async getPresignedUrl(key?: string) {
+    if (!key) return undefined;
+
+    try {
+      const command = new PutObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+      });
+
+      const url = await getSignedUrl(this.client, command, {
+        expiresIn: 60 * 60 * 24,
+      });
+
+      return url;
+    } catch (error) {
+      return undefined;
+    }
   }
 
   async deleteFile(key?: string) {

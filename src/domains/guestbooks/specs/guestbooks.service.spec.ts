@@ -1,4 +1,7 @@
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
+import { GuestbooksController } from '../guestbooks.controller';
+import { GuestbooksRepository } from '../guestbooks.repository';
 import { GuestbooksService } from '../guestbooks.service';
 
 describe('GuestBooksService', () => {
@@ -6,7 +9,30 @@ describe('GuestBooksService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [GuestbooksService],
+      providers: [
+        GuestbooksService,
+        {
+          provide: GuestbooksRepository,
+          useValue: {
+            findMany: jest.fn(),
+            count: jest.fn(),
+            create: jest.fn(),
+            updateOneBy: jest.fn(),
+            findUniqueBy: jest.fn(),
+            deleteOneBy: jest.fn(),
+          },
+        },
+        {
+          provide: 'StorageService',
+          useValue: {
+            uploadFile: jest.fn(),
+            deleteFile: jest.fn(),
+          },
+        },
+        ConfigService,
+      ],
+      imports: [ConfigModule],
+      controllers: [GuestbooksController],
     }).compile();
 
     service = module.get<GuestbooksService>(GuestbooksService);

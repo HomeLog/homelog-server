@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Inject,
   Param,
   Post,
   Put,
@@ -21,6 +22,7 @@ import { User } from '@prisma/client';
 import { TGuestbookResponse } from 'src/common/types/guestbooks.type';
 import { DAccount } from 'src/decorator/account.decorator';
 import { Private } from 'src/decorator/private.decorator';
+import { StorageService } from 'src/storage/storage.service';
 import {
   CreateGuestbookDto,
   PaginationQueryDto,
@@ -31,7 +33,11 @@ import { GuestbooksService } from './guestbooks.service';
 @Controller('guestbooks')
 @ApiTags('방명록 API')
 export class GuestbooksController {
-  constructor(private readonly guestbooksService: GuestbooksService) {}
+  constructor(
+    private readonly guestbooksService: GuestbooksService,
+    @Inject('StorageService')
+    private readonly storageService: StorageService,
+  ) {}
 
   /**
    * @description: 방명록 목록 조회
@@ -86,20 +92,29 @@ export class GuestbooksController {
     return this.guestbooksService.findOne(id);
   }
 
+  @Get('presigned-url/:id')
+  @Private('user')
+  getPresignedUrl(@Param('id') id: string) {
+    return this.storageService.getPresignedUrl(`raw/${id}`);
+  }
+
   /**
    * @description: 방명록 생성
    */
   @Post()
-  @UseInterceptors(FileInterceptor('imageFile'))
   @Private('user')
-  create(
+  async create(
     @DAccount('user') user: User,
-    @UploadedFile() imageFile: Express.Multer.File,
     @Body() createGuestbookDto: CreateGuestbookDto,
   ) {
     const { id: userId } = user;
 
-    return this.guestbooksService.create(userId, imageFile, createGuestbookDto);
+    const guestbook = await this.guestbooksService.create(
+      userId,
+      createGuestbookDto,
+    );
+
+    return guestbook;
   }
 
   @Put(':id/photo')

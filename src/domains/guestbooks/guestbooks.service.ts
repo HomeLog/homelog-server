@@ -35,17 +35,10 @@ export class GuestbooksService {
     return await this.guestbooksRepository.count(userId);
   }
 
-  async create(
-    userId: string,
-    imageFile: Express.Multer.File,
-    dto: CreateGuestbookDto,
-  ) {
-    const imageKey = await this.storageService.uploadFile(imageFile);
-
+  async create(userId: string, dto: CreateGuestbookDto) {
     const result = await this.guestbooksRepository.create({
       id: nanoid(),
       userId,
-      imageKey,
       ...dto,
     });
 

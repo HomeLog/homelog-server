@@ -3,4 +3,6 @@ export interface StorageService {
     file: Express.Multer.File | undefined,
   ): Promise<string | undefined>;
   deleteFile(key: string): Promise<boolean>;
+
+  getPresignedUrl(key: string): Promise<string | undefined>;
 }

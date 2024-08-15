@@ -5,7 +5,7 @@ on: [push]
 env:
   ECR_REPOSITORY: homelog-server
   AWS_REGION: ap-northeast-2
-  ECS_TASK_DEFINITION: ./.aws/taskDefinition.json
+  ECS_TASK_DEFINITION: .github/.aws/taskDefinition.json
   ECS_SERVICE: homelog-server-service
   ECS_CLUSTER: homelog
   CONTAINER_NAME: homelog-server

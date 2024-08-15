@@ -13,6 +13,10 @@ export class CreateGuestbookDto {
   @IsString()
   @IsNotEmpty()
   visitorName: string;
+
+  @IsString()
+  @IsNotEmpty()
+  imageKey: string;
 }
 
 export class UpdateGuestbookDto {

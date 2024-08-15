@@ -42,6 +42,15 @@ export class MinioService implements StorageService {
       throw new Error('MINIO_BUCKET_NAME is not set');
     }
   }
+  async getPresignedUrl(key: string): Promise<string | undefined> {
+    const presignedUrl = await this.client.presignedPutObject(
+      this.bucketName,
+      key,
+      60,
+    );
+
+    return presignedUrl;
+  }
 
   private async addToResizeMessageQueue(imageKey: string) {
     try {

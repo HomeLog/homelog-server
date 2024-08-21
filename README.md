@@ -9,10 +9,10 @@
 
 ## 2. 개발자
 
-| 프로필 | 깃허브                                      | 역할                                                            |
-| ------ | ------------------------------------------- | --------------------------------------------------------------- |
-| 고지명 | [jimyungkoh](https://github.com/jimyungkoh) | 역할1                                                           |
-| 박상희 | [Sangddong](https://github.com/Sangddong)   | 카카오 소셜로그인 구현, 프로필 관련 로직 구현, swagger api 작성 |
+| 프로필 | 깃허브                                      | 역할                                                                         |
+| ------ | ------------------------------------------- | ---------------------------------------------------------------------------- |
+| 고지명 | [jimyungkoh](https://github.com/jimyungkoh) | 방명록 api 설계 및 구현, CI/CD 파이프라인 및 통합 테스트 환경 구축, 리팩토링 |
+| 박상희 | [Sangddong](https://github.com/Sangddong)   | 카카오 소셜로그인 구현, 프로필 관련 로직 구현, swagger api 작성              |
 
 ## 3. 브랜치 전략
 
@@ -51,4 +51,4 @@
 
 ## 5. ERD
 
-![image](https://github.com/HomeLog/homelog-server/assets/108922813/d3c37233-c0d5-4f88-8597-7b5018c2b3cd)
+![db-erd](https://github.com/user-attachments/assets/dc7a3257-3550-4f5d-9769-d5ddd2ff1aca)

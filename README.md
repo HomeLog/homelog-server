@@ -8,7 +8,11 @@
 
 ## 1. 아키텍처
 
-![homelog-backend-architecture](https://github.com/user-attachments/assets/0693db1f-3095-44d7-b856-e4c21daa1346)
+- 프로덕션 환경에서의 아키텍처
+  ![homelog-backend-architecture](https://github.com/user-attachments/assets/0693db1f-3095-44d7-b856-e4c21daa1346)
+
+- 개발 환경에서의 아키텍처
+  ![homelog-dev-architecture](https://i.imgur.com/cOZ3ljM.png)
 
 ## 2. 서비스 소개
 

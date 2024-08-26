@@ -110,7 +110,9 @@ export class UsersController {
     description: '쿠키를 만료시켜 로그아웃합니다.',
   })
   async signOut(@Res({ passthrough: true }) response: Response) {
-    return response.clearCookie('accessToken', this.cookieOptions).status(204);
+    response.clearCookie('accessToken', this.cookieOptions);
+    response.status(204);
+    return;
   }
 
   @Private('user')

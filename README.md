@@ -1,6 +1,6 @@
 # homelog-server
 
-![thumbnail](https://github.com/user-attachments/assets/2170673d-673b-44f7-8904-c4c830cffe92)
+![thumbnail](https://github.com/user-attachments/assets/a2c7029f-6c1a-42da-b6cf-0dc5c4e15bba)
 
 ## 🏠 HomeLog 배포 주소
 

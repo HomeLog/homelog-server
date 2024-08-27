@@ -12,12 +12,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import {
-  ApiCookieAuth,
-  ApiOperation,
-  ApiQuery,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiCookieAuth, ApiTags } from '@nestjs/swagger';
 import { User } from '@prisma/client';
 import { TGuestbookResponse } from 'src/common/types/guestbooks.type';
 import { DAccount } from 'src/decorator/account.decorator';
@@ -40,25 +35,11 @@ export class GuestbooksController {
   ) {}
 
   /**
-   * @description: 방명록 목록 조회
+   * 방명록 목록을 조회합니다.
    */
   @Get()
   @Private('user')
-  @ApiOperation({
-    summary: '방명록 목록 조회',
-    description: '방명록 목록을 조회합니다.',
-  })
   @ApiCookieAuth()
-  @ApiQuery({
-    name: 'page',
-    required: false,
-    type: Number,
-  })
-  @ApiQuery({
-    name: 'size',
-    required: false,
-    type: Number,
-  })
   async findAll(
     @Query()
     paginationQuery: PaginationQueryDto,
@@ -76,7 +57,7 @@ export class GuestbooksController {
   }
 
   /**
-   * @description: 방명록 개수 조회
+   * 전체 방명록의 개수를 조회합니다.
    */
   @Get('count')
   @Private('user')
@@ -85,13 +66,16 @@ export class GuestbooksController {
   }
 
   /**
-   * @description: 방명록 단건 조회
+   * 방명록을 조회합니다.
    */
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.guestbooksService.findOne(id);
   }
 
+  /**
+   * 방명록의 사진 업로드하기 위한 사전 서명된 URL을 조회합니다.
+   */
   @Get('presigned-url/:id')
   @Private('user')
   getPresignedUrl(@Param('id') id: string) {
@@ -99,7 +83,7 @@ export class GuestbooksController {
   }
 
   /**
-   * @description: 방명록 생성
+   * 방명록을 생성합니다.
    */
   @Post()
   @Private('user')
@@ -117,6 +101,9 @@ export class GuestbooksController {
     return guestbook;
   }
 
+  /**
+   * 방명록 사진을 업로드합니다.
+   */
   @Put(':id/photo')
   @UseInterceptors(FileInterceptor('imageFile'))
   @Private('user')
@@ -129,7 +116,7 @@ export class GuestbooksController {
   }
 
   /**
-   * @description: 방명록 작성
+   * 방명록 메시지를 수정합니다.
    */
   @Put(':id')
   updateMessage(
@@ -140,7 +127,7 @@ export class GuestbooksController {
   }
 
   /**
-   * @description: 방명록 삭제
+   * 방명록을 삭제합니다.
    */
   @Delete(':id')
   @Private('user')

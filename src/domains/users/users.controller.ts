@@ -20,13 +20,19 @@ import { CookieOptions, Response } from 'express';
 import * as jwt from 'jsonwebtoken';
 
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
-import { ApiCreatedResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiCreatedResponse,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
 import { DAccount } from 'src/decorator/account.decorator';
 import { Private } from 'src/decorator/private.decorator';
 import { StorageService } from 'src/storage/storage.service';
 import { EditProfileDto, SignUpKakaoDto } from './users.dto';
 import { UsersService } from './users.service';
 
+@ApiTags('유저 API')
 @Controller('users')
 export class UsersController {
   private jwtSecret: string;

@@ -15,7 +15,7 @@
 <details>
 <summary>프로덕션 환경에서의 아키텍처 보기</summary>
 
-![homelog-backend-architecture](https://github.com/user-attachments/assets/1fad5261-0b13-43c3-bcbb-ef43dc30c34b)
+![homelog-backend-architecture](https://github.com/user-attachments/assets/52fc5b66-c73b-486a-b03a-44c1f3cc24ec)
 
 </details>
 

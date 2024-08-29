@@ -81,6 +81,24 @@
   - 방명록 작성 링크 생성 기능
   - 방명록 삭제 기능
 
-## 7. ERD
+## 7. Sequence Diagram
+
+<details>
+<summary>로그인 처리 과정</summary>
+
+![로그인처리과정](https://github.com/user-attachments/assets/c3f68887-3b4c-4594-a872-a3310611c6cb)
+
+</details>
+
+<details>
+<summary>리소스 요청시 인증 및 인가</summary>
+
+- 🛠️리프레시 토큰 적용이 업데이트 예정입니다 🛠️
+
+![인증및인가과정](https://github.com/user-attachments/assets/72d7159f-3c0e-4e2b-8cb6-e643c0f43e8b)
+
+</details>
+
+## 8. ERD
 
 ![db-erd](https://github.com/user-attachments/assets/dc7a3257-3550-4f5d-9769-d5ddd2ff1aca)

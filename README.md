@@ -85,14 +85,18 @@
 
 <details>
 <summary>로그인 처리 과정</summary>
+
 ![로그인처리과정](https://github.com/user-attachments/assets/c3f68887-3b4c-4594-a872-a3310611c6cb)
+
 </details>
 
 <details>
 <summary>리소스 요청시 인증 및 인가</summary>
 
 - 🛠️리프레시 토큰 적용이 업데이트 예정입니다 🛠️
+
 ![인증및인가과정](https://github.com/user-attachments/assets/72d7159f-3c0e-4e2b-8cb6-e643c0f43e8b)
+
 </details>
 
 ## 8. ERD

@@ -32,13 +32,12 @@ export class AuthGuard implements CanActivate {
     if (accountTypeInDecorator === undefined) return true;
 
     const request = context.switchToHttp().getRequest();
-    const token = request.cookies['accessToken'];
+    const accessToken = request.cookies['accessToken'];
 
-    if (!token) {
+    if (!accessToken)
       throw new UnauthorizedException('Access token is missing');
-    }
 
-    const decodedToken = this.verifyToken(token);
+    const decodedToken = this.verifyToken(accessToken);
     const user = await this.usersService.findUserById(
       decodedToken.sub as string,
     );

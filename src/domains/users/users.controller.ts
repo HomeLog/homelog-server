@@ -10,6 +10,7 @@ import {
   Put,
   Query,
   Res,
+  UnauthorizedException,
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
@@ -27,6 +28,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { DAccount } from 'src/decorator/account.decorator';
+import Cookies from 'src/decorator/cookies.decorator';
 import { Private } from 'src/decorator/private.decorator';
 import { StorageService } from 'src/storage/storage.service';
 import { EditProfileDto, SignUpKakaoDto } from './users.dto';
@@ -45,7 +47,6 @@ export class UsersController {
     private readonly storageService: StorageService,
   ) {
     this.cookieOptions = {
-      maxAge: 1000 * 60 * 15,
       httpOnly: true,
       sameSite: 'strict',
       secure: false,
@@ -56,6 +57,40 @@ export class UsersController {
     };
 
     this.jwtSecret = this.configService.getOrThrow('JWT_SECRET');
+  }
+
+  private generateToken(userId: string) {
+    const accessToken = jwt.sign({}, this.jwtSecret, {
+      subject: userId,
+      expiresIn: '15m',
+    });
+    const refreshToken = jwt.sign({}, this.jwtSecret, {
+      subject: userId,
+      expiresIn: '30d',
+    });
+
+    return { accessToken, refreshToken };
+  }
+
+  private setTokenCookie(
+    response: Response,
+    accessToken: string,
+    refreshToken: string,
+  ) {
+    response.cookie('accessToken', accessToken, {
+      ...this.cookieOptions,
+      maxAge: 1000 * 60 * 15,
+    });
+
+    response.cookie('refreshToken', refreshToken, {
+      ...this.cookieOptions,
+      maxAge: 1000 * 60 * 60 * 24 * 30,
+    });
+  }
+
+  private clearTokenCookie(response: Response) {
+    response.clearCookie('accessToken', this.cookieOptions);
+    response.clearCookie('refreshToken', this.cookieOptions);
   }
 
   @Get('kakao')
@@ -84,7 +119,10 @@ export class UsersController {
     description: '발급된 액세스토큰을 반환한다.',
     type: String,
   })
-  async kakaoCallback(@Query('code') code: string, @Res() response: Response) {
+  async kakaoCallback(
+    @Query('code') code: string,
+    @Res({ passthrough: true }) response: Response,
+  ) {
     const kakaoAccessToken = await this.usersService.kakaoSignIn(code);
 
     const url = 'https://kapi.kakao.com/v2/user/me';
@@ -100,13 +138,37 @@ export class UsersController {
       userInfo,
     );
 
-    const homeLogAccessToken = jwt.sign({}, this.jwtSecret, {
-      subject: user.id,
-    });
+    const { accessToken, refreshToken } = this.generateToken(user.id);
 
-    response.cookie('accessToken', homeLogAccessToken, this.cookieOptions);
+    this.setTokenCookie(response, accessToken, refreshToken);
 
-    return response.send({ homeLogAccessToken });
+    return { accessToken };
+  }
+
+  @Get('/refresh')
+  async refresh(
+    @Cookies('refreshToken') refreshToken: string,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    try {
+      const decoded = jwt.verify(refreshToken, this.jwtSecret);
+
+      if (typeof decoded.sub !== 'string')
+        throw new UnauthorizedException('invalid refresh token');
+      const user = await this.usersService.findUserById(decoded.sub);
+
+      if (!user) throw new UnauthorizedException('invalid refresh token');
+
+      const { accessToken: newAccessToken, refreshToken: rotatedRefreshToken } =
+        this.generateToken(decoded.sub);
+
+      this.setTokenCookie(response, newAccessToken, rotatedRefreshToken);
+
+      return { accessToken: newAccessToken };
+    } catch (error) {
+      this.clearTokenCookie(response);
+      throw new UnauthorizedException('invalid refresh token');
+    }
   }
 
   @Private('user')
@@ -116,9 +178,8 @@ export class UsersController {
     description: '쿠키를 만료시켜 로그아웃합니다.',
   })
   async signOut(@Res({ passthrough: true }) response: Response) {
-    response.clearCookie('accessToken', this.cookieOptions);
+    this.clearTokenCookie(response);
     response.status(204);
-    return;
   }
 
   @Private('user')

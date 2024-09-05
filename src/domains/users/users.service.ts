@@ -1,9 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UserProfile } from '@prisma/client';
-import axios from 'axios';
-import { PrismaService } from 'src/database/prisma/prisma.service';
-import { EditProfileDto, SignUpKakaoDto } from './users.dto';
+import { DToken } from 'src/common/types/token.type';
+import { KakaoAuthComponent } from './components/kakao-auth.component';
+import { TokenManagerComponent } from './components/token-manager.component';
+import { UsersRepository } from './components/users.repository';
+import { EditProfileDto } from './users.dto';
 
 @Injectable()
 export class UsersService {
@@ -12,124 +14,94 @@ export class UsersService {
 
   constructor(
     private readonly configService: ConfigService,
-    private readonly prismaService: PrismaService,
+    private readonly usersRepository: UsersRepository,
+    private readonly kakaoAuthComponent: KakaoAuthComponent,
+    private readonly tokenManagerComponent: TokenManagerComponent,
   ) {
     this.restApiKey = this.configService.getOrThrow('REST_API_KEY');
     this.redirectUri = this.configService.getOrThrow('REDIRECT_URI');
   }
 
   getKakaoCode() {
-    return `https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=${this.restApiKey}&redirect_uri=${this.redirectUri}`;
+    return this.kakaoAuthComponent.getKakaoCode();
   }
 
   async kakaoSignIn(code: string) {
-    const url = 'https://kauth.kakao.com/oauth/token';
-    const params = new URLSearchParams({
-      grant_type: 'authorization_code',
-      client_id: this.restApiKey,
-      redirect_uri: this.redirectUri,
-      code,
-    });
-    const header = {
-      'Content-type': 'application/x-www-form-urlencoded;charset=utf-8',
-    };
-
-    const response = await axios.post(url, params, {
-      headers: header,
-    });
-
-    return response.data.access_token;
+    const tokenValue = this.kakaoAuthComponent.signIn(code);
+    return tokenValue;
   }
 
   async kakaoSignOut(token: string) {
-    const url = 'https://kapi.kakao.com/v1/user/logout';
-    const header = {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      Authorization: `Bearer ${token}`,
-    };
-    await axios.post(url, null, { headers: header });
-    return true;
+    const siginOutResult = await this.kakaoAuthComponent.signOut(token);
+    return siginOutResult;
   }
 
-  async createUser(dto: SignUpKakaoDto, userInfo) {
-    const kakaoId = dto.id.toString();
-    const nickname = userInfo.data.properties.nickname;
-    const guestBookName = `${nickname}님의 방명록`;
+  async createUserByKakao(oAuthCode: string) {
+    const oAuthAccessToken = await this.kakaoAuthComponent.signIn(oAuthCode);
+    const userInfo = await this.kakaoAuthComponent.userInfo(oAuthAccessToken);
 
-    const user = await this.prismaService.user.upsert({
-      where: { id: kakaoId },
-      update: {},
-      create: {
-        id: kakaoId,
-        userProfile: {
-          create: {
-            nickname: nickname,
-            guestBookName: guestBookName,
-          },
-        },
-      },
-      include: {
-        userProfile: true,
-      },
-    });
+    const { kakaoId, nickname } = {
+      kakaoId: userInfo.id.toString(),
+      nickname: userInfo.properties.nickname,
+    };
 
+    const user = await this.usersRepository.createUser(kakaoId, nickname);
     return user;
   }
 
-  // async getKakaoProfile(accessToken: string) {
-  //   const url = 'https://kapi.kakao.com/v2/user/me';
-  //   const headers = {
-  //     Authorization: `Bearer ${accessToken}`,
-  //     'Content-type': 'application/x-www-form-urlencoded;charset=utf-8',
-  //   };
-
-  //   const response = await axios.get(url, { headers });
-
-  //   const nickname = response.data.properties.nickname;
-  //   const guestBookName = `${nickname}님의 방명록`;
-
-  //   const dto = {
-  //     nickname: nickname,
-  //     guestBookName: guestBookName,
-  //     deleted: false,
-  //   };
-
-  //   return dto;
-  // }
-
   async findUserById(id: string) {
-    return await this.prismaService.user.findUnique({
-      where: { id },
-    });
+    const user = await this.usersRepository.findUser(id);
+    return user;
   }
 
   async getProfileById(userId: string): Promise<UserProfile | null> {
-    const profile = await this.prismaService.userProfile.findUnique({
-      where: { id: userId },
-    });
-
+    const profile = await this.usersRepository.findUsersProfile(userId);
     return profile;
   }
 
   async editProfile(
     userId: string,
     dto: EditProfileDto,
-    avatarImage?: string | null,
-    homeImage?: string | null,
+    avatarImageKey?: string | null,
+    homeImageKey?: string | null,
   ) {
-    return await this.prismaService.userProfile.update({
-      where: { id: userId },
-      data: { ...dto, avatarImageKey: avatarImage, homeImageKey: homeImage },
+    return await this.usersRepository.editProfile(userId, {
+      ...dto,
+      avatarImageKey,
+      homeImageKey,
     });
   }
 
   async deleteImage(userId: string, isAvatarImage: boolean) {
     const imageKeyToUpdate = isAvatarImage ? 'avatarImageKey' : 'homeImageKey';
-    await this.prismaService.userProfile.update({
-      where: { id: userId },
-      data: {
-        [imageKeyToUpdate]: null,
-      },
+    await this.usersRepository.editProfile(userId, {
+      [imageKeyToUpdate]: null,
     });
+  }
+
+  generateTokens(userId: string): {
+    accessToken: DToken;
+    refreshToken: DToken;
+  } {
+    const tokens = this.tokenManagerComponent.generateTokens(userId);
+
+    return tokens;
+  }
+
+  async regenerateTokens(refreshToken: string) {
+    try {
+      const { subject: userId } =
+        this.tokenManagerComponent.verifyTokenValue(refreshToken);
+
+      const user = await this.usersRepository.findUser(userId);
+
+      if (!user) throw new UnauthorizedException('invalid refresh token');
+
+      const tokens = this.tokenManagerComponent.generateTokens(userId);
+
+      return tokens;
+    } catch (error) {
+      throw error;
+    }
   }
 }

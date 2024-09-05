@@ -10,9 +10,7 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
 import { SuccessInterceptor } from './common/interceptors/success-response.interceptor';
 import { PrismaModule } from './database/prisma/prisma.module';
 import { GuestbooksModule } from './domains/guestbooks/guestbooks.module';
-import { UsersController } from './domains/users/users.controller';
 import { UsersModule } from './domains/users/users.module';
-import { UsersService } from './domains/users/users.service';
 import { AuthGuard } from './guard/auth.guard';
 import { StorageModule } from './storage/storage.module';
 
@@ -30,10 +28,9 @@ import { StorageModule } from './storage/storage.module';
     }),
     GuestbooksModule,
   ],
-  controllers: [AppController, UsersController],
+  controllers: [AppController],
   providers: [
     AppService,
-    UsersService,
     ConfigService,
     {
       provide: APP_INTERCEPTOR,

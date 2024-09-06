@@ -14,9 +14,8 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiCookieAuth, ApiTags } from '@nestjs/swagger';
 import { User } from '@prisma/client';
-import { TGuestbookResponse } from 'src/common/types/guestbooks.type';
-import { DAccount } from 'src/decorator/account.decorator';
-import { Private } from 'src/decorator/private.decorator';
+import { DAccount, Private } from 'src/common/decorators';
+import { TGuestbookData } from 'src/common/types/guestbooks.type';
 import { StorageService } from 'src/storage/storage.service';
 import {
   CreateGuestbookDto,
@@ -46,7 +45,7 @@ export class GuestbooksController {
     @DAccount('user')
     user: User,
   ) {
-    const guestbooks: TGuestbookResponse[] =
+    const guestbooks: TGuestbookData[] =
       await this.guestbooksService.findGuestbooks(
         user.id,
         paginationQuery.page,

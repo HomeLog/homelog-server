@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as jwt from 'jsonwebtoken';
-import { DToken, TToken } from 'src/common/types/token.type';
+import { TTokenInfo, TTokenType } from 'src/common/types/token.type';
 
 @Injectable()
 export class TokenManagerComponent {
@@ -21,7 +21,7 @@ export class TokenManagerComponent {
     this.jwtSecret = this.configService.getOrThrow('JWT_SECRET');
   }
 
-  generateToken(name: TToken, subject: string): DToken {
+  generateToken(name: TTokenType, subject: string): TTokenInfo {
     return {
       name,
       value: jwt.sign({}, this.jwtSecret, {
@@ -39,8 +39,8 @@ export class TokenManagerComponent {
   }
 
   generateTokens(userId: string): {
-    accessToken: DToken;
-    refreshToken: DToken;
+    accessToken: TTokenInfo;
+    refreshToken: TTokenInfo;
   } {
     return {
       accessToken: this.generateToken('accessToken', userId),

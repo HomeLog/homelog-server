@@ -1,7 +1,7 @@
 import { applyDecorators } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
 
-export function ApiUsersKakaoSignIn() {
+export function DocsUsersKakaoSignIn() {
   return applyDecorators(
     ApiOperation({
       summary: '인가 코드 발급',
@@ -10,7 +10,7 @@ export function ApiUsersKakaoSignIn() {
   );
 }
 
-export function ApiUsersKakaoCallback() {
+export function DocsUsersKakaoCallback() {
   return applyDecorators(
     ApiOperation({
       summary: '액세스 토큰 코드 발급',
@@ -29,7 +29,7 @@ export function ApiUsersKakaoCallback() {
   );
 }
 
-export function ApiUsersSignOut() {
+export function DocsUsersSignOut() {
   return applyDecorators(
     ApiOperation({
       summary: '로그아웃',
@@ -38,7 +38,7 @@ export function ApiUsersSignOut() {
   );
 }
 
-export function ApiUsersIsSignedIn() {
+export function DocsUsersIsSignedIn() {
   return applyDecorators(
     ApiOperation({
       summary: '로그인 확인',
@@ -48,7 +48,7 @@ export function ApiUsersIsSignedIn() {
   );
 }
 
-export function ApiUsersGetUser() {
+export function DocsUsersGetUser() {
   return applyDecorators(
     ApiOperation({
       summary: '유저 확인',
@@ -56,7 +56,7 @@ export function ApiUsersGetUser() {
     }),
   );
 }
-export function ApiUsersGetProfile() {
+export function DocsUsersGetProfile() {
   return applyDecorators(
     ApiOperation({
       summary: '프로필 확인',
@@ -65,7 +65,7 @@ export function ApiUsersGetProfile() {
     }),
   );
 }
-export function ApiUsersEditProfile() {
+export function DocsUsersEditProfile() {
   return applyDecorators(
     ApiOperation({
       summary: '프로필 수정',
@@ -74,7 +74,7 @@ export function ApiUsersEditProfile() {
   );
 }
 
-export function ApiUsersDeleteImage() {
+export function DocsUsersDeleteImage() {
   return applyDecorators(
     ApiOperation({
       summary: '기본이미지로 변경',

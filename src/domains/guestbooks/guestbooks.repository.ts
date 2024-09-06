@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { TGuestbookSelect } from 'src/common/types/guestbooks.type';
+import { TGuestbookSelectFields } from 'src/common/types/guestbooks.type';
 import { PrismaService } from 'src/database/prisma/prisma.service';
 
 @Injectable()
 export class GuestbooksRepository {
-  private readonly GUESTBOOK_SELECT_FIELDS: TGuestbookSelect;
+  private readonly GUESTBOOK_SELECT_FIELDS: TGuestbookSelectFields;
 
   constructor(private readonly prismaService: PrismaService) {
     this.GUESTBOOK_SELECT_FIELDS = {

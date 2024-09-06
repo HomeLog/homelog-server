@@ -7,8 +7,8 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import * as jwt from 'jsonwebtoken';
+import { TAccount } from 'src/common/types/account.type';
 import { UsersService } from 'src/domains/users/users.service';
-import { AccountType } from 'src/domains/users/users.type';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -23,11 +23,10 @@ export class AuthGuard implements CanActivate {
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const accountTypeInDecorator =
-      this.reflector.getAllAndOverride<AccountType>('accountType', [
-        context.getHandler(),
-        context.getClass(),
-      ]);
+    const accountTypeInDecorator = this.reflector.getAllAndOverride<TAccount>(
+      'accountType',
+      [context.getHandler(), context.getClass()],
+    );
 
     if (accountTypeInDecorator === undefined) return true;
 

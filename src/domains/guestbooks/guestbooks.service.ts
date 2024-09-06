@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { nanoid } from 'nanoid';
 import {
   TGuestbookData,
-  TGuestbookResponse,
+  TGuestbookPayload,
 } from 'src/common/types/guestbooks.type';
 import { StorageService } from 'src/storage/storage.service';
 import { CreateGuestbookDto, UpdateGuestbookDto } from './guestbooks.dto';
@@ -96,7 +96,7 @@ export class GuestbooksService {
 
     if (!result) throw new GuestBookNotFoundException();
 
-    return this.extractGuestBookData(result as TGuestbookData);
+    return this.extractGuestBookData(result as TGuestbookPayload);
   }
 
   async delete(id: string, userId: string) {
@@ -109,14 +109,17 @@ export class GuestbooksService {
     return this.extractGuestBookData(result);
   }
 
-  private validateGuestbook(guestbook: TGuestbookData | null, userId: string) {
+  private validateGuestbook(
+    guestbook: TGuestbookPayload | null,
+    userId: string,
+  ) {
     if (!guestbook) {
       throw new GuestBookNotFoundException();
     } else if (guestbook.userId !== userId)
       throw new GuestBookAccessDeniedException();
   }
 
-  private extractGuestBookData(guestBook: TGuestbookData): TGuestbookResponse {
+  private extractGuestBookData(guestBook: TGuestbookPayload): TGuestbookData {
     const { user, ...foundGuestbook } = guestBook;
 
     return {
@@ -126,8 +129,8 @@ export class GuestbooksService {
   }
 
   private extractGuestBooksData(
-    guestBooks: TGuestbookData[],
-  ): TGuestbookResponse[] {
+    guestBooks: TGuestbookPayload[],
+  ): TGuestbookData[] {
     return guestBooks.map((guestBook) => this.extractGuestBookData(guestBook));
   }
 }

@@ -1,7 +1,7 @@
-export type TToken = 'accessToken' | 'refreshToken';
+export type TTokenType = 'accessToken' | 'refreshToken';
 
-export interface DToken {
-  name: TToken;
+export interface TTokenInfo {
+  name: TTokenType;
   value: string;
   maxAge: number;
 }

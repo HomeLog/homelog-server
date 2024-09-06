@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { UserProfile } from '@prisma/client';
-import { DToken } from 'src/common/types/token.type';
+import { TTokenInfo } from 'src/common/types/token.type';
 import { KakaoAuthComponent } from './components/kakao-auth.component';
 import { TokenManagerComponent } from './components/token-manager.component';
 import { UsersRepository } from './components/users.repository';
@@ -80,8 +80,8 @@ export class UsersService {
   }
 
   generateTokens(userId: string): {
-    accessToken: DToken;
-    refreshToken: DToken;
+    accessToken: TTokenInfo;
+    refreshToken: TTokenInfo;
   } {
     const tokens = this.tokenManagerComponent.generateTokens(userId);
 

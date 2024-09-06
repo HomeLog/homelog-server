@@ -7,11 +7,11 @@ import { NestjsFormDataModule } from 'nestjs-form-data';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { AuthGuard } from './common/guard/auth.guard';
 import { SuccessInterceptor } from './common/interceptors/success-response.interceptor';
 import { PrismaModule } from './database/prisma/prisma.module';
 import { GuestbooksModule } from './domains/guestbooks/guestbooks.module';
 import { UsersModule } from './domains/users/users.module';
-import { AuthGuard } from './guard/auth.guard';
 import { StorageModule } from './storage/storage.module';
 
 @Module({

@@ -15,26 +15,23 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { User } from '@prisma/client';
-import { CookieOptions, Response } from 'express';
-
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ApiTags } from '@nestjs/swagger';
-import { DToken } from 'src/common/types/token.type';
-import { DAccount } from 'src/decorator/account.decorator';
-import Cookies from 'src/decorator/cookies.decorator';
-import { Private } from 'src/decorator/private.decorator';
+import { User } from '@prisma/client';
+import { CookieOptions, Response } from 'express';
+import { DAccount, DCookie, Private } from 'src/common/decorators';
+import { TTokenInfo } from 'src/common/types/token.type';
 import { StorageService } from 'src/storage/storage.service';
 import {
-  ApiUsersDeleteImage,
-  ApiUsersEditProfile,
-  ApiUsersGetProfile,
-  ApiUsersGetUser,
-  ApiUsersIsSignedIn,
-  ApiUsersKakaoCallback,
-  ApiUsersKakaoSignIn,
-  ApiUsersSignOut,
-} from './users.api';
+  DocsUsersDeleteImage,
+  DocsUsersEditProfile,
+  DocsUsersGetProfile,
+  DocsUsersGetUser,
+  DocsUsersIsSignedIn,
+  DocsUsersKakaoCallback,
+  DocsUsersKakaoSignIn,
+  DocsUsersSignOut,
+} from './decorators/docs-users.decorator';
 import { EditProfileDto } from './users.dto';
 import { UsersService } from './users.service';
 
@@ -60,7 +57,7 @@ export class UsersController {
     };
   }
 
-  private setTokenCookie(response: Response, token: DToken) {
+  private setTokenCookie(response: Response, token: TTokenInfo) {
     response.cookie(token.name, token.value, {
       ...this.cookieOptions,
       maxAge: token.maxAge,
@@ -73,7 +70,7 @@ export class UsersController {
   }
 
   @Get('kakao')
-  @ApiUsersKakaoSignIn()
+  @DocsUsersKakaoSignIn()
   kakaoSignIn(@Res() response: Response) {
     const url = this.usersService.getKakaoCode();
 
@@ -81,7 +78,7 @@ export class UsersController {
   }
 
   @Get('kakao/callback')
-  @ApiUsersKakaoCallback()
+  @DocsUsersKakaoCallback()
   async kakaoCallback(
     @Query('code') code: string,
     @Res({ passthrough: true }) response: Response,
@@ -100,7 +97,7 @@ export class UsersController {
 
   @Get('/refresh')
   async refresh(
-    @Cookies('refreshToken') refreshToken: string,
+    @DCookie('refreshToken') refreshToken: string,
     @Res({ passthrough: true }) response: Response,
   ) {
     try {
@@ -119,7 +116,7 @@ export class UsersController {
 
   @Private('user')
   @Delete('sign-out')
-  @ApiUsersSignOut()
+  @DocsUsersSignOut()
   async signOut(@Res({ passthrough: true }) response: Response) {
     this.clearAuthCookies(response);
     response.status(204);
@@ -127,13 +124,13 @@ export class UsersController {
 
   @Private('user')
   @Get('sign-in-status')
-  @ApiUsersIsSignedIn()
+  @DocsUsersIsSignedIn()
   isSignedIn() {
     return true;
   }
 
   @Get('user')
-  @ApiUsersGetUser()
+  @DocsUsersGetUser()
   async getUser(userId: string) {
     const user = await this.usersService.findUserById(userId);
 
@@ -144,7 +141,7 @@ export class UsersController {
 
   @Private('user')
   @Get('profile')
-  @ApiUsersGetProfile()
+  @DocsUsersGetProfile()
   async getProfile(@DAccount('user') user: User) {
     const profile = await this.usersService.getProfileById(user.id);
 
@@ -160,7 +157,7 @@ export class UsersController {
       { name: 'homeImage', maxCount: 1 },
     ]),
   )
-  @ApiUsersEditProfile()
+  @DocsUsersEditProfile()
   async editProfile(
     @Body() dto: EditProfileDto,
     @DAccount('user') user: User,
@@ -193,7 +190,7 @@ export class UsersController {
 
   @Private('user')
   @Delete('profile/:imageType')
-  @ApiUsersDeleteImage()
+  @DocsUsersDeleteImage()
   async deleteImage(
     @DAccount('user') user: User,
     @Param('imageType') imageType: string,

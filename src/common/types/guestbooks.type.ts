@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
 
-export interface TGuestbookSelect extends Prisma.GuestBookSelectScalar {
+export interface TGuestbookSelectFields extends Prisma.GuestBookSelectScalar {
   createdAt: true;
   imageKey: true;
   userId: boolean;
@@ -15,7 +15,7 @@ export interface TGuestbookSelect extends Prisma.GuestBookSelectScalar {
   };
 }
 
-export type TGuestbookData = Prisma.GuestBookGetPayload<{
+export type TGuestbookPayload = Prisma.GuestBookGetPayload<{
   include: {
     imageKey: true;
     createdAt: true;
@@ -31,6 +31,6 @@ export type TGuestbookData = Prisma.GuestBookGetPayload<{
   };
 }>;
 
-export type TGuestbookResponse = Omit<TGuestbookData, 'user'> & {
+export type TGuestbookData = Omit<TGuestbookPayload, 'user'> & {
   hostNickname?: string;
 };

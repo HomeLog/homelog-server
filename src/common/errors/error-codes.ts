@@ -29,6 +29,12 @@ export class ErrorCodes {
     'size는 최대 20 이하이어야 합니다.',
     400,
   );
+
+  static readonly GUESTBOOK_ALREADY_SUBMITTED = new ErrorCodes(
+    '이미 작성된 방명록입니다.',
+    400,
+  );
+
   static readonly GUESTBOOK_NOT_FOUND = new ErrorCodes(
     '방명록을 찾을 수 없습니다.',
     404,

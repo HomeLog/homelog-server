@@ -5,13 +5,13 @@ import {
   TGuestbookPayload,
 } from 'src/common/types/guestbooks.type';
 import { StorageService } from 'src/storage/storage.service';
+import { GuestbooksRepository } from './components/guestbooks.repository';
 import { CreateGuestbookDto, UpdateGuestbookDto } from './guestbooks.dto';
 import {
   GuestBookAccessDeniedException,
   GuestBookNoImageException,
   GuestBookNotFoundException,
 } from './guestbooks.exception';
-import { GuestbooksRepository } from './guestbooks.repository';
 
 @Injectable()
 export class GuestbooksService {
@@ -22,10 +22,7 @@ export class GuestbooksService {
     private readonly guestbooksRepository: GuestbooksRepository,
   ) {}
 
-  async findGuestbooks(userId: string, page?: number, limit?: number) {
-    const take: number = !limit || limit < 0 ? 10 : limit;
-    const skip: number = !page || page <= 0 ? 0 : (page - 1) * take;
-
+  async findGuestbooks(userId: string, skip?: number, take?: number) {
     const result = await this.guestbooksRepository.findMany(userId, skip, take);
 
     return this.extractGuestBooksData(result);
@@ -36,8 +33,10 @@ export class GuestbooksService {
   }
 
   async create(userId: string, dto: CreateGuestbookDto) {
+    const id = nanoid();
+
     const result = await this.guestbooksRepository.create({
-      id: nanoid(),
+      id,
       userId,
       ...dto,
     });

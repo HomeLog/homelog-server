@@ -27,7 +27,10 @@ export class GuestbooksRepository {
     };
   }
 
-  async findMany(userId: string, skip: number, take: number) {
+  async findMany(userId: string, skip: number = 0, take: number = 10) {
+    take = !take || take < 0 ? 10 : take;
+    skip = !skip || skip <= 0 ? 0 : (skip - 1) * take;
+
     const guestbooks = await this.prismaService.guestBook.findMany({
       select: this.GUESTBOOK_SELECT_FIELDS,
       where: {

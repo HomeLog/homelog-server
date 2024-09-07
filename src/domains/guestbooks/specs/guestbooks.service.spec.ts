@@ -1,7 +1,7 @@
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
+import { GuestbooksRepository } from '../components/guestbooks.repository';
 import { GuestbooksController } from '../guestbooks.controller';
-import { GuestbooksRepository } from '../guestbooks.repository';
 import { GuestbooksService } from '../guestbooks.service';
 
 describe('GuestBooksService', () => {

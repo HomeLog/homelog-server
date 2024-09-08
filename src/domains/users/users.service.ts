@@ -43,18 +43,19 @@ export class UsersService {
   async editProfile(
     userId: string,
     dto: EditProfileDto,
-    files: TUserProfileImages,
+    profileImages: TUserProfileImages,
   ) {
     const { avatarImageKey, homeImageKey } =
       await this.usersRepositoryComponent.getOneProfile(userId);
 
-    await this.usersStorageComponent.deleteUserProfileImages(
-      avatarImageKey,
-      homeImageKey,
-    );
-
-    const { avatarImageKey: newAvatarImageKey, homeImageKey: newHomeImageKey } =
-      await this.usersStorageComponent.putUserProfileImages(files);
+    const { newAvatarImageKey, newHomeImageKey } =
+      await this.usersStorageComponent.updateProfileImages(
+        {
+          avatarImageKey,
+          homeImageKey,
+        },
+        profileImages,
+      );
 
     return await this.usersRepositoryComponent.editProfile(userId, {
       ...dto,
@@ -71,7 +72,6 @@ export class UsersService {
       await this.usersRepositoryComponent.getOneProfile(userId);
 
     await this.usersStorageComponent.deleteUserProfileImage(imageKeyToDelete);
-
     await this.usersRepositoryComponent.editProfile(userId, {
       [imageKey]: null,
     });

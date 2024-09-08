@@ -9,7 +9,7 @@ export class UsersStorageComponent {
     private readonly storageService: StorageService,
   ) {}
 
-  async putUserProfileImages(
+  private async uploadProfileImages(
     images: TUserProfileImages,
   ): Promise<{ avatarImageKey?: string; homeImageKey?: string }> {
     const { avatarImage, homeImage } = {
@@ -25,16 +25,30 @@ export class UsersStorageComponent {
     return { avatarImageKey, homeImageKey };
   }
 
-  async deleteUserProfileImage(key?: string | null) {
-    if (!key) return;
-    await this.storageService.deleteFile(key);
+  private async deleteProfileImages(...keys: (string | null | undefined)[]) {
+    const validKeys = keys.filter((k): k is string => k != null);
+
+    await Promise.all(
+      validKeys.map((key) => this.storageService.deleteFile(key)),
+    );
   }
 
-  async deleteUserProfileImages(...keys: (string | null | undefined)[]) {
-    const deletionPromises = keys
-      .filter((k): k is string => k !== null && k !== undefined)
-      .map((key) => this.storageService.deleteFile(key));
+  async updateProfileImages(
+    imageKeys: {
+      avatarImageKey?: string | null;
+      homeImageKey?: string | null;
+    },
+    newProfileImages: TUserProfileImages,
+  ): Promise<{ newAvatarImageKey?: string; newHomeImageKey?: string }> {
+    this.deleteProfileImages(imageKeys.avatarImageKey, imageKeys.homeImageKey);
 
-    await Promise.all(deletionPromises);
+    const { avatarImageKey: newAvatarImageKey, homeImageKey: newHomeImageKey } =
+      await this.uploadProfileImages(newProfileImages);
+
+    return { newAvatarImageKey, newHomeImageKey };
+  }
+
+  async deleteUserProfileImage(key?: string | null) {
+    await this.storageService.deleteFile(key ?? '');
   }
 }

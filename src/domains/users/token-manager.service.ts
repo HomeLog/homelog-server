@@ -2,9 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as jwt from 'jsonwebtoken';
 import { TTokenInfo, TTokenType } from 'src/common/types/token.type';
+import { UsersRepositoryComponent } from './components/users-repository.component';
+import {
+  InvalidUserTokenException,
+  UserNotFoundException,
+} from './users.exception';
 
 @Injectable()
-export class TokenManagerComponent {
+export class TokenManagerService {
   private readonly jwtSecret: string;
   private readonly tokenExpiration = {
     accessToken: {
@@ -17,11 +22,14 @@ export class TokenManagerComponent {
     },
   };
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly usersRepositoryComponent: UsersRepositoryComponent,
+  ) {
     this.jwtSecret = this.configService.getOrThrow('JWT_SECRET');
   }
 
-  generateToken(name: TTokenType, subject: string): TTokenInfo {
+  private generateToken(name: TTokenType, subject: string): TTokenInfo {
     return {
       name,
       value: jwt.sign({}, this.jwtSecret, {
@@ -52,11 +60,28 @@ export class TokenManagerComponent {
     try {
       const decoded = jwt.verify(token, this.jwtSecret);
 
-      if (typeof decoded.sub !== 'string') throw new Error('Invalid token');
+      if (typeof decoded.sub !== 'string')
+        throw new InvalidUserTokenException();
 
       return { decoded, subject: decoded.sub };
     } catch (e) {
-      throw e;
+      throw new InvalidUserTokenException();
+    }
+  }
+
+  async regenerateTokens(refreshToken: string) {
+    try {
+      const { subject: userId } = this.verifyTokenValue(refreshToken);
+
+      const user = await this.usersRepositoryComponent.findOneUser(userId);
+
+      if (!user) throw new UserNotFoundException();
+
+      const tokens = this.generateTokens(userId);
+
+      return tokens;
+    } catch (error) {
+      throw error;
     }
   }
 }

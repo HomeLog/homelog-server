@@ -18,3 +18,9 @@ export class GuestBookNoImageException extends ServiceException {
     super(ErrorCodes.GUESTBOOK_NO_IMAGE);
   }
 }
+
+export class GuestBookAlreadySubmittedException extends ServiceException {
+  constructor() {
+    super(ErrorCodes.GUESTBOOK_ALREADY_SUBMITTED);
+  }
+}

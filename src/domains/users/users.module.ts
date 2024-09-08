@@ -4,8 +4,9 @@ import { ConfigService } from '@nestjs/config';
 import { NestjsFormDataModule } from 'nestjs-form-data';
 import { StorageModule } from '../../storage/storage.module';
 import { KakaoAuthComponent } from './components/kakao-auth.component';
-import { TokenManagerComponent } from './components/token-manager.component';
-import { UsersRepository } from './components/users.repository';
+import { UsersRepositoryComponent } from './components/users-repository.component';
+import { UsersStorageComponent } from './components/users-storage.component';
+import { TokenManagerService } from './token-manager.service';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
@@ -14,9 +15,10 @@ import { UsersService } from './users.service';
   providers: [
     UsersService,
     ConfigService,
+    TokenManagerService,
     KakaoAuthComponent,
-    TokenManagerComponent,
-    UsersRepository,
+    UsersStorageComponent,
+    UsersRepositoryComponent,
   ],
   imports: [HttpModule, StorageModule, NestjsFormDataModule],
   exports: [UsersService, KakaoAuthComponent],

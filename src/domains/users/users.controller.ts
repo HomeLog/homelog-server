@@ -1,11 +1,8 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
   Get,
-  Inject,
-  NotFoundException,
   Param,
   Put,
   Query,
@@ -20,8 +17,9 @@ import { ApiTags } from '@nestjs/swagger';
 import { User } from '@prisma/client';
 import { CookieOptions, Response } from 'express';
 import { DAccount, DCookie, Private } from 'src/common/decorators';
+import { ErrorCodes } from 'src/common/errors/error-codes';
 import { TTokenInfo } from 'src/common/types/token.type';
-import { StorageService } from 'src/storage/storage.service';
+import { TUserProfileImages } from 'src/common/types/users.type';
 import {
   DocsUsersDeleteImage,
   DocsUsersEditProfile,
@@ -32,6 +30,7 @@ import {
   DocsUsersKakaoSignIn,
   DocsUsersSignOut,
 } from './decorators/docs-users.decorator';
+import { TokenManagerService } from './token-manager.service';
 import { EditProfileDto } from './users.dto';
 import { UsersService } from './users.service';
 
@@ -41,10 +40,9 @@ export class UsersController {
   private readonly cookieOptions: CookieOptions;
 
   constructor(
-    private readonly usersService: UsersService,
     private readonly configService: ConfigService,
-    @Inject('StorageService')
-    private readonly storageService: StorageService,
+    private readonly usersService: UsersService,
+    private readonly tokenManagerService: TokenManagerService,
   ) {
     this.cookieOptions = {
       httpOnly: true,
@@ -57,7 +55,7 @@ export class UsersController {
     };
   }
 
-  private setTokenCookie(response: Response, token: TTokenInfo) {
+  private setAuthCookie(response: Response, token: TTokenInfo) {
     response.cookie(token.name, token.value, {
       ...this.cookieOptions,
       maxAge: token.maxAge,
@@ -85,12 +83,11 @@ export class UsersController {
   ) {
     const user = await this.usersService.createUserByKakao(code);
 
-    const { accessToken, refreshToken } = this.usersService.generateTokens(
-      user.id,
-    );
+    const { accessToken, refreshToken } =
+      this.tokenManagerService.generateTokens(user.id);
 
-    this.setTokenCookie(response, accessToken);
-    this.setTokenCookie(response, refreshToken);
+    this.setAuthCookie(response, accessToken);
+    this.setAuthCookie(response, refreshToken);
 
     return { accessToken };
   }
@@ -102,15 +99,15 @@ export class UsersController {
   ) {
     try {
       const { accessToken: newAccessToken, refreshToken: rotatedRefreshToken } =
-        await this.usersService.regenerateTokens(refreshToken);
+        await this.tokenManagerService.regenerateTokens(refreshToken);
 
-      this.setTokenCookie(response, newAccessToken);
-      this.setTokenCookie(response, rotatedRefreshToken);
+      this.setAuthCookie(response, newAccessToken);
+      this.setAuthCookie(response, rotatedRefreshToken);
 
       return { accessToken: newAccessToken };
     } catch (error) {
       this.clearAuthCookies(response);
-      throw new UnauthorizedException('invalid refresh token');
+      throw new UnauthorizedException(ErrorCodes.INVALID_USER_TOKEN.message);
     }
   }
 
@@ -132,21 +129,14 @@ export class UsersController {
   @Get('user')
   @DocsUsersGetUser()
   async getUser(userId: string) {
-    const user = await this.usersService.findUserById(userId);
-
-    if (!user) throw new NotFoundException('no user');
-
-    return user;
+    return await this.usersService.getUser(userId);
   }
 
   @Private('user')
   @Get('profile')
   @DocsUsersGetProfile()
   async getProfile(@DAccount('user') user: User) {
-    const profile = await this.usersService.getProfileById(user.id);
-
-    if (!profile) throw new NotFoundException('no profile');
-    else return profile;
+    return await this.usersService.getProfile(user.id);
   }
 
   @Put('profile')
@@ -162,30 +152,9 @@ export class UsersController {
     @Body() dto: EditProfileDto,
     @DAccount('user') user: User,
     @UploadedFiles()
-    files: {
-      avatarImage?: Express.Multer.File[];
-      homeImage?: Express.Multer.File[];
-    },
+    files: TUserProfileImages,
   ) {
-    const profile = await this.usersService.getProfileById(user.id.toString());
-    if (!profile) throw new BadRequestException('not existing profile');
-
-    const { avatarImage, homeImage } = {
-      avatarImage: files?.avatarImage?.pop(),
-      homeImage: files?.homeImage?.pop(),
-    };
-
-    const [avatarImageKey, homeImageKey] = await Promise.all([
-      this.storageService.uploadFile(avatarImage),
-      this.storageService.uploadFile(homeImage),
-    ]);
-
-    return await this.usersService.editProfile(
-      user.id.toString(),
-      dto,
-      avatarImageKey,
-      homeImageKey,
-    );
+    return await this.usersService.editProfile(user.id, dto, files);
   }
 
   @Private('user')
@@ -193,8 +162,8 @@ export class UsersController {
   @DocsUsersDeleteImage()
   async deleteImage(
     @DAccount('user') user: User,
-    @Param('imageType') imageType: string,
+    @Param('imageType') imageType: 'avatar' | 'home',
   ) {
-    await this.usersService.deleteImage(user.id, imageType === 'avatar');
+    await this.usersService.deleteImage(user.id, `${imageType}ImageKey`);
   }
 }

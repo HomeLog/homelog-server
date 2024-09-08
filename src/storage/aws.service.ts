@@ -92,7 +92,7 @@ export class S3Service implements StorageService {
 
     const deleteCommand = new DeleteObjectCommand({
       Bucket: this.bucketName,
-      Key: key,
+      Key: `raw/${key}`,
     });
 
     try {

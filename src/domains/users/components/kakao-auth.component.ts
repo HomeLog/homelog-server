@@ -58,16 +58,21 @@ export class KakaoAuthComponent {
     }
   }
 
-  async userInfo(oAuthAccessToken: string) {
+  async getUserInfo(oAuthAccessToken: string) {
     const url = 'https://kapi.kakao.com/v2/user/me';
 
-    const { data: userInfo } = await firstValueFrom(
+    const { data } = await firstValueFrom(
       this.httpService.get(url, {
         headers: {
           Authorization: `Bearer ${oAuthAccessToken}`,
         },
       }),
     );
+
+    const userInfo = {
+      kakaoId: data.id.toString(),
+      nickname: data.properties.nickname as string,
+    };
 
     return userInfo;
   }

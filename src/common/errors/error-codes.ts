@@ -3,6 +3,21 @@ export class ErrorCodes {
     readonly message: string,
     readonly status: number,
   ) {}
+  // 유저 관련 에러
+  static readonly INVALID_USER_TOKEN = new ErrorCodes(
+    '유효하지 않은 인증 정보입니다.',
+    401,
+  );
+
+  static readonly USER_NOT_FOUND = new ErrorCodes(
+    '사용자를 찾을 수 없습니다.',
+    404,
+  );
+
+  static readonly USER_PROFILE_NOT_FOUND = new ErrorCodes(
+    '사용자 프로필을 찾을 수 없습니다.',
+    404,
+  );
 
   // 방명록 관련 에러
   static readonly PAGE_MUST_BE_NUMBER = new ErrorCodes(

@@ -1,6 +1,6 @@
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
-import { GuestbooksRepository } from '../components/guestbooks.repository';
+import { GuestbooksRepositoryComponent } from '../components/guestbooks-repository.component';
 import { GuestbooksController } from '../guestbooks.controller';
 import { GuestbooksService } from '../guestbooks.service';
 
@@ -12,7 +12,7 @@ describe('GuestBooksService', () => {
       providers: [
         GuestbooksService,
         {
-          provide: GuestbooksRepository,
+          provide: GuestbooksRepositoryComponent,
           useValue: {
             findMany: jest.fn(),
             count: jest.fn(),

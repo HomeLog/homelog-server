@@ -37,11 +37,8 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException('Access token is missing');
 
     const decodedToken = this.verifyToken(accessToken);
-    const user = await this.usersService.findUserById(
-      decodedToken.sub as string,
-    );
 
-    if (!user) throw new UnauthorizedException('User not found');
+    const user = await this.usersService.getUser(decodedToken.sub as string);
 
     request.user = user;
     return true;

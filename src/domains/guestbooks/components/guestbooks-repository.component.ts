@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { TGuestbookSelectFields } from 'src/common/types/guestbooks.type';
+import {
+  TGuestbookPayload,
+  TGuestbookSelectFields,
+} from 'src/common/types/guestbooks.type';
 import { PrismaService } from 'src/database/prisma/prisma.service';
+import { GuestBookNotFoundException } from '../guestbooks.exception';
 
 @Injectable()
-export class GuestbooksRepository {
+export class GuestbooksRepositoryComponent {
   private readonly GUESTBOOK_SELECT_FIELDS: TGuestbookSelectFields;
 
   constructor(private readonly prismaService: PrismaService) {
@@ -27,7 +31,7 @@ export class GuestbooksRepository {
     };
   }
 
-  async findMany(userId: string, skip: number = 0, take: number = 10) {
+  async findManyByUserId(userId: string, skip: number = 0, take: number = 10) {
     take = !take || take < 0 ? 10 : take;
     skip = !skip || skip <= 0 ? 0 : (skip - 1) * take;
 
@@ -46,15 +50,23 @@ export class GuestbooksRepository {
     return guestbooks;
   }
 
-  async count(userId: string) {
+  async countByUserId(userId: string) {
     return await this.prismaService.guestBook.count({
       where: { userId },
     });
   }
 
-  async create(data: Prisma.GuestBookUncheckedCreateInput) {
+  async create(
+    id: string,
+    userId: string,
+    data: Partial<Prisma.GuestBookCreateWithoutUserInput>,
+  ) {
     const createData = {
-      data,
+      data: {
+        id,
+        userId,
+        ...data,
+      },
       select: this.GUESTBOOK_SELECT_FIELDS,
     };
 
@@ -64,31 +76,51 @@ export class GuestbooksRepository {
     return createdGuestbook;
   }
 
-  async findUniqueBy(where: Prisma.GuestBookWhereUniqueInput) {
-    const guestbook = await this.prismaService.guestBook.findUnique({
+  private async findUnique(where: Prisma.GuestBookWhereUniqueInput) {
+    return await this.prismaService.guestBook.findUnique({
       where,
       select: this.GUESTBOOK_SELECT_FIELDS,
     });
+  }
 
+  /**
+   * 특정 게스트북을 '찾는' 메서드
+   *
+   *  @param guestbookId - 찾을 게스트북의 id
+   * @returns Promise<TGuestbookPayload | null>
+   */
+  async findOne(guestbookId: string): Promise<TGuestbookPayload | null> {
+    const guestbook = await this.findUnique({ id: guestbookId });
     return guestbook;
   }
 
-  async updateOneBy(
-    where: Prisma.GuestBookWhereUniqueInput,
-    data: Partial<Prisma.GuestBookUpdateInput>,
-  ) {
-    const updatedGuestbook = await this.prismaService.guestBook.update({
-      select: this.GUESTBOOK_SELECT_FIELDS,
-      where,
-      data,
-    });
-
-    return updatedGuestbook;
+  /**
+   * 특정 게스트북을 '가져오는' 메서드
+   *
+   * @param guestbookId - 가져올 게스트북의 아이디
+   * @returns Promise<TGuestbookPayload>
+   * @throws GuestBookNotFoundException
+   */
+  async getOne(guestbookId: string): Promise<TGuestbookPayload> {
+    const guestbook = await this.findUnique({ id: guestbookId });
+    if (!guestbook) throw new GuestBookNotFoundException();
+    return guestbook;
   }
 
-  async deleteOneBy(where: Prisma.GuestBookWhereUniqueInput) {
+  async updateOne(
+    guestBookId: string,
+    data: Partial<Prisma.GuestBookUpdateInput>,
+  ) {
+    return await this.prismaService.guestBook.update({
+      select: this.GUESTBOOK_SELECT_FIELDS,
+      where: { id: guestBookId },
+      data,
+    });
+  }
+
+  async deleteOne(guestBookId: string) {
     return await this.prismaService.guestBook.delete({
-      where,
+      where: { id: guestBookId },
       select: this.GUESTBOOK_SELECT_FIELDS,
     });
   }

@@ -69,7 +69,7 @@ export class GuestbooksController {
    */
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.guestbooksService.findOne(id);
+    return this.guestbooksService.getOne(id);
   }
 
   /**
